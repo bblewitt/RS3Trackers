@@ -143,7 +143,7 @@ public class QuestCapeTrackerPanel extends JPanel {
                             if (skillIcon != null) {
                                 ImageIcon icon = new ImageIcon(skillIcon.getScaledInstance(15, 15, Image.SCALE_SMOOTH));
 
-                                leftPanel.add(createSkillPanel(skillName, currentLevel, targetLevel, icon));
+                                leftPanel.add(createSkillPanel(currentLevel, targetLevel, icon));
                             } else {
                                 System.out.println("Icon for " + skillName + " is null.");
                             }
@@ -182,7 +182,7 @@ public class QuestCapeTrackerPanel extends JPanel {
         }
     }
 
-    private JPanel createSkillPanel(String skillName, int currentLevel, int targetLevel, ImageIcon icon) {
+    private JPanel createSkillPanel(int currentLevel, int targetLevel, ImageIcon icon) {
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
         panel.setBackground(new Color(11, 31, 41));
