@@ -1,6 +1,7 @@
 package main.java.com.bblewitt.pages;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.targets.QuestCapeTrackerTargetLevels;
 import javax.imageio.ImageIO;
@@ -18,8 +19,11 @@ public class QuestCapeTrackerPanel extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(QuestCapeTrackerPanel.class.getName());
 
     private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
+    private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
 
     private final JPanel leftPanel;
+    private final JPanel rightPanel;
+    private Timer saveTimer;
 
     private static final String[][] SKILL_ORDER = {
             {"Attack", "Constitution", "Mining"},
@@ -53,6 +57,7 @@ public class QuestCapeTrackerPanel extends JPanel {
         JPanel topCenterPanel = new JPanel();
         topCenterPanel.setPreferredSize(new Dimension(640, 1));
         topCenterPanel.setOpaque(false);
+
         List<String> usernames = getAvailableUsernames();
         JComboBox<String> usernameDropdown = new JComboBox<>(usernames.toArray(new String[0]));
         usernameDropdown.setPreferredSize(new Dimension(200, 30));
@@ -60,26 +65,32 @@ public class QuestCapeTrackerPanel extends JPanel {
         topCenterPanel.add(usernameDropdown);
         centerPanel.add(topCenterPanel);
 
-        usernameDropdown.addActionListener(e -> {
-            String selectedUsername = (String) usernameDropdown.getSelectedItem();
-            loadSkillsData(selectedUsername);
-        });
-
         JPanel bottomCenterPanel = new JPanel();
         bottomCenterPanel.setLayout(new GridLayout(1, 2, 10, 10));
         bottomCenterPanel.setPreferredSize(new Dimension(640, 400));
-        bottomCenterPanel.setBackground(Color.WHITE);
+        bottomCenterPanel.setBackground(new Color(11, 31, 41));
 
         leftPanel = new JPanel();
         leftPanel.setLayout(new GridLayout(10, 3, 5, 5));
         leftPanel.setBackground(new Color(11, 31, 41));
 
-        JPanel rightPanel = new JPanel();
-        rightPanel.setBackground(Color.GRAY);
-        rightPanel.setPreferredSize(new Dimension(200, 300));
+        rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setBackground(new Color(11, 31, 41));
+        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        usernameDropdown.addActionListener(e -> {
+            String selectedUsername = (String) usernameDropdown.getSelectedItem();
+            loadSkillsData(selectedUsername);
+            SwingUtilities.invokeLater(() -> populateQuestChecklist(rightPanel, usernameDropdown));
+        });
+
+        JScrollPane scrollPane = new JScrollPane(rightPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         bottomCenterPanel.add(leftPanel);
-        bottomCenterPanel.add(rightPanel);
+        bottomCenterPanel.add(scrollPane);
         centerPanel.add(bottomCenterPanel);
 
         JButton backButton = new JButton("Back to Main Menu");
@@ -208,5 +219,125 @@ public class QuestCapeTrackerPanel extends JPanel {
             panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         }
         return panel;
+    }
+
+    private void populateQuestChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+        rightPanel.removeAll();
+
+        Gson gson = new Gson();
+        JsonObject baseQuests;
+        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/quests.json")) {
+            assert inputStream != null;
+            try (InputStreamReader reader = new InputStreamReader(inputStream)) {
+                baseQuests = gson.fromJson(reader, JsonObject.class);
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load base quests file", e);
+            return;
+        }
+
+        String username = (String) usernameDropdown.getSelectedItem();
+        JsonObject userQuests = loadUserQuestProgress(username);
+
+        baseQuests.entrySet().forEach(entry -> {
+            String year = entry.getKey();
+            JsonArray questsArray = entry.getValue().getAsJsonArray();
+
+            JLabel yearLabel = new JLabel(year);
+            yearLabel.setForeground(Color.WHITE);
+            rightPanel.add(yearLabel);
+
+            questsArray.forEach(questElement -> {
+                if (questElement.isJsonPrimitive()) {
+                    String quest = questElement.getAsString();
+                    JCheckBox questCheckBox = new JCheckBox(quest);
+                    questCheckBox.setForeground(Color.WHITE);
+                    questCheckBox.setBackground(new Color(11, 31, 41));
+                    boolean completed = userQuests.has(quest) && userQuests.get(quest).getAsBoolean();
+                    questCheckBox.setSelected(completed);
+
+                    if (completed) {
+                        questCheckBox.setForeground(Color.GREEN);
+                    } else {
+                        questCheckBox.setForeground(Color.RED);
+                    }
+
+                    questCheckBox.addActionListener(e -> {
+                        userQuests.addProperty(quest, questCheckBox.isSelected());
+                        debouncedSaveUserQuestProgress(username, userQuests);
+
+                        if (questCheckBox.isSelected()) {
+                            questCheckBox.setForeground(Color.GREEN);
+                        } else {
+                            questCheckBox.setForeground(Color.RED);
+                        }
+                    });
+
+                    rightPanel.add(questCheckBox);
+                }
+            });
+        });
+
+        rightPanel.revalidate();
+        rightPanel.repaint();
+    }
+
+    private JsonObject loadUserQuestProgress(String username) {
+        File userQuestFile = new File(JSON_DATA_DIR + username + "_quests.json");
+
+        if (!userQuestFile.exists()) {
+            return new JsonObject();
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(userQuestFile))) {
+            Gson gson = new Gson();
+            return gson.fromJson(reader, JsonObject.class);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to load quest progress for user: " + username + ". Returning default data.", e);
+            return new JsonObject();
+        }
+    }
+
+    private void saveUserQuestProgress(String username, String quest, boolean completed) {
+        File jsonDir = new File(JSON_DATA_DIR);
+        if (!jsonDir.exists()) {
+            boolean directoriesCreated = jsonDir.mkdirs();
+            if (directoriesCreated) {
+                System.out.println("Directories created successfully.");
+            } else {
+                System.out.println("Failed to create directories. Please check permissions or path.");
+            }
+        } else {
+            System.out.println("Directories already exist.");
+        }
+
+        File userQuestFile = new File(JSON_DATA_DIR + username + "_quests.json");
+        JsonObject userQuests = loadUserQuestProgress(username);
+
+        userQuests.addProperty(quest, completed);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userQuestFile))) {
+            Gson gson = new Gson();
+            gson.toJson(userQuests, writer);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to save quest progress for user: " + username, e);
+        }
+    }
+
+    private void debouncedSaveUserQuestProgress(String username, JsonObject userQuests) {
+        if (saveTimer != null) {
+            saveTimer.stop();
+        }
+
+        saveTimer = new Timer(1000, e -> saveAllUserQuestProgress(username, userQuests));
+        saveTimer.setRepeats(false);
+        saveTimer.start();
+    }
+
+    private void saveAllUserQuestProgress(String username, JsonObject userQuests) {
+        for (String quest : userQuests.keySet()) {
+            boolean completed = userQuests.get(quest).getAsBoolean();
+            saveUserQuestProgress(username, quest, completed);
+        }
     }
 }
