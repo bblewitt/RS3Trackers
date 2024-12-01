@@ -3,7 +3,6 @@ package main.java.com.bblewitt;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.pages.QuestCapeTrackerPanel;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
