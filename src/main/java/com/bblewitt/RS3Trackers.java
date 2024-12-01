@@ -3,6 +3,7 @@ package main.java.com.bblewitt;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.pages.QuestCapeTrackerPanel;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -15,6 +16,7 @@ import java.util.Objects;
 public class RS3Trackers {
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
+    private static int messageCode = 1;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -110,7 +112,7 @@ public class RS3Trackers {
                 });
             } else {
                 int finalI = i;
-                navButton.addActionListener(e -> JOptionPane.showMessageDialog(frame, "Page " + finalI + " not implemented yet."));
+                navButton.addActionListener(e -> showErrorMessage("Page " + finalI + " not implemented yet."));
             }
             buttonPanel.add(navButton);
         }
@@ -124,7 +126,7 @@ public class RS3Trackers {
             if (!username.isEmpty()) {
                 fetchHiscoresData(username);
             } else {
-                JOptionPane.showMessageDialog(frame, "Please enter a username.");
+                showErrorMessage("Please enter a username.");
             }
         });
 
@@ -149,7 +151,7 @@ public class RS3Trackers {
             try {
                 this.backgroundImage = new ImageIcon(Objects.requireNonNull(getClass().getResource(imagePath))).getImage();
             } catch (Exception e) {
-                System.err.println("Could not load background image: " + e.getMessage());
+                showErrorMessage("Error loading background image: " + e.getMessage());
             }
         }
 
@@ -181,7 +183,7 @@ public class RS3Trackers {
 
             System.out.println("Data saved successfully to " + outputFileName);
         } catch (Exception e) {
-            System.err.println("Error fetching or saving data: " + e.getMessage());
+            showErrorMessage("Error fetching or saving data: " + e.getMessage());
         }
     }
 
@@ -192,7 +194,7 @@ public class RS3Trackers {
 
         if (!hiscoresDir.exists()) {
             if (!hiscoresDir.mkdirs()) {
-                throw new IOException("Failed to create directory: " + outputDir);
+                showErrorMessage("Failed to create directory: " + outputDir);
             }
         }
 
@@ -220,5 +222,11 @@ public class RS3Trackers {
             gson.toJson(hiscoreData, writer);
         }
         return outputFileName;
+    }
+
+    private static void showErrorMessage(String message) {
+        String uniqueCode = "ERR-" + messageCode++;
+        String fullMessage = "Error Code: " + uniqueCode + "\n" + message;
+        JOptionPane.showMessageDialog(null, fullMessage, "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

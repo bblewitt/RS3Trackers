@@ -12,11 +12,23 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
 public class QuestCapeTrackerPanel extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(QuestCapeTrackerPanel.class.getName());
+
+    private String generateMessageCode() {
+        return UUID.randomUUID().toString();
+    }
+
+    private void showMessage(String message) {
+        String code = generateMessageCode();
+        String fullMessage = "Error Code: " + code + "\n" + message;
+        JOptionPane.showMessageDialog(this, fullMessage, "Error", JOptionPane.ERROR_MESSAGE);
+        LOGGER.log(Level.SEVERE, "Message Code: " + code + " - " + message);
+    }
 
     private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
     private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
@@ -147,7 +159,7 @@ public class QuestCapeTrackerPanel extends JPanel {
                             try {
                                 targetLevel = QuestCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
-                                System.out.println("No target level found for skill: " + skillName);
+                                showMessage("No target level found for skill: " + skillName);
                             }
 
                             BufferedImage skillIcon = loadSkillIcon(skillName.toLowerCase());
@@ -156,10 +168,10 @@ public class QuestCapeTrackerPanel extends JPanel {
 
                                 leftPanel.add(createSkillPanel(currentLevel, targetLevel, icon));
                             } else {
-                                System.out.println("Icon for " + skillName + " is null.");
+                                showMessage("Icon for " + skillName + " is null.");
                             }
                         } else {
-                            System.out.println("No level data for skill: " + skillName);
+                            showMessage("No level data for skill: " + skillName);
                         }
                     }
                 }
@@ -168,10 +180,10 @@ public class QuestCapeTrackerPanel extends JPanel {
                 leftPanel.repaint();
 
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "An error occurred", e);
+                showMessage("An error occurred while loading the skills data.");
             }
         } else {
-            System.out.println("User file not found: " + userFile.getAbsolutePath());
+            showMessage("User file not found: " + userFile.getAbsolutePath());
         }
     }
 
@@ -184,11 +196,11 @@ public class QuestCapeTrackerPanel extends JPanel {
             if (inputStream != null) {
                 return ImageIO.read(inputStream);
             } else {
-                System.out.println("Icon not found: " + iconPath);
+                showMessage("Icon not found: " + iconPath);
                 return null;
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "An error occurred", e);
+            showMessage("An error occurred while loading the skill icon.");
             return null;
         }
     }
@@ -305,7 +317,7 @@ public class QuestCapeTrackerPanel extends JPanel {
             if (directoriesCreated) {
                 System.out.println("Directories created successfully.");
             } else {
-                System.out.println("Failed to create directories. Please check permissions or path.");
+                showMessage("Failed to create directories. Please check permissions or path.");
             }
         } else {
             System.out.println("Directories already exist.");
@@ -320,7 +332,7 @@ public class QuestCapeTrackerPanel extends JPanel {
             Gson gson = new Gson();
             gson.toJson(userQuests, writer);
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to save quest progress for user: " + username, e);
+            showMessage("Failed to save quest progress for user: " + username);
         }
     }
 
