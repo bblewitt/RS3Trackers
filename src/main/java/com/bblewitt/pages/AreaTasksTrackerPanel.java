@@ -3,9 +3,10 @@ package main.java.com.bblewitt.pages;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.targets.QuestCapeTrackerTargetLevels;
+import main.java.com.bblewitt.targets.AreaTasksTrackerTargetLevels;
 import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
 import main.java.com.bblewitt.util.CustomTreeCellRenderer;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -17,11 +18,11 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class QuestCapeTrackerPanel extends JPanel {
-    private static final Logger LOGGER = Logger.getLogger(QuestCapeTrackerPanel.class.getName());
+public class AreaTasksTrackerPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(AreaTasksTrackerPanel.class.getName());
 
     private String generateMessageCode() {
         return UUID.randomUUID().toString();
@@ -54,16 +55,16 @@ public class QuestCapeTrackerPanel extends JPanel {
             {"Archaeology", "Necromancy"}
     };
 
-    public QuestCapeTrackerPanel(ActionListener backActionListener) {
+    public AreaTasksTrackerPanel(ActionListener backActionListener) {
         setPreferredSize(new Dimension(640, 720));
         setBackground(new Color(11, 31, 41));
         setLayout(new BorderLayout());
 
-        JLabel questLabel = new JLabel("Quest Cape Tracker", SwingConstants.CENTER);
-        questLabel.setFont(new Font("Arial", Font.BOLD, 30));
-        questLabel.setForeground(Color.WHITE);
-        questLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(questLabel, BorderLayout.NORTH);
+        JLabel areaLabel = new JLabel("Area Tasks Tracker", SwingConstants.CENTER);
+        areaLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        areaLabel.setForeground(Color.WHITE);
+        areaLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        add(areaLabel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -98,7 +99,7 @@ public class QuestCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateQuestChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateAreaChecklist(rightPanel, usernameDropdown));
         });
 
         JScrollPane scrollPane = new JScrollPane(rightPanel);
@@ -161,7 +162,7 @@ public class QuestCapeTrackerPanel extends JPanel {
 
                             int targetLevel = 99;
                             try {
-                                targetLevel = QuestCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
+                                targetLevel = AreaTasksTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
                                 showMessage("No target level found for skill: " + skillName);
                             }
@@ -237,63 +238,63 @@ public class QuestCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateQuestChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateAreaChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         rightPanel.removeAll();
 
         Gson gson = new Gson();
-        JsonObject baseQuests;
-        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/quests.json")) {
+        JsonObject baseAreaTasks;
+        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/area_tasks.json")) {
             assert inputStream != null;
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-                baseQuests = gson.fromJson(reader, JsonObject.class);
+                baseAreaTasks = gson.fromJson(reader, JsonObject.class);
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to load base quests file", e);
+            LOGGER.log(Level.SEVERE, "Failed to load base area tasks file", e);
             return;
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userQuests = loadUserQuestProgress(username);
+        JsonObject userAreaTasks = loadUserAreaTaskProgress(username);
 
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Quests");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Area Tasks");
 
-        baseQuests.entrySet().forEach(entry -> {
-            String year = entry.getKey();
-            JsonArray questsArray = entry.getValue().getAsJsonArray();
+        baseAreaTasks.entrySet().forEach(entry -> {
+            String task = entry.getKey();
+            JsonArray areaTasksArray = entry.getValue().getAsJsonArray();
 
-            DefaultMutableTreeNode yearNode = new DefaultMutableTreeNode(year);
+            DefaultMutableTreeNode taskNode = new DefaultMutableTreeNode(task);
 
-            questsArray.forEach(questElement -> {
-                if (questElement.isJsonPrimitive()) {
-                    String quest = questElement.getAsString();
-                    JCheckBox questCheckBox = new JCheckBox(quest);
-                    questCheckBox.setForeground(Color.WHITE);
-                    questCheckBox.setBackground(new Color(11, 31, 41));
-                    boolean completed = userQuests.has(quest) && userQuests.get(quest).getAsBoolean();
-                    questCheckBox.setSelected(completed);
+            areaTasksArray.forEach(areaElement -> {
+                if (areaElement.isJsonPrimitive()) {
+                    String area = areaElement.getAsString();
+                    JCheckBox areaCheckBox = new JCheckBox(area);
+                    areaCheckBox.setForeground(Color.WHITE);
+                    areaCheckBox.setBackground(new Color(11, 31, 41));
+                    boolean completed = userAreaTasks.has(area) && userAreaTasks.get(area).getAsBoolean();
+                    areaCheckBox.setSelected(completed);
 
                     if (completed) {
-                        questCheckBox.setForeground(Color.GREEN);
+                        areaCheckBox.setForeground(Color.GREEN);
                     } else {
-                        questCheckBox.setForeground(Color.RED);
+                        areaCheckBox.setForeground(Color.RED);
                     }
 
-                    questCheckBox.addActionListener(e -> {
-                        userQuests.addProperty(quest, questCheckBox.isSelected());
-                        debouncedSaveUserQuestProgress(username, userQuests);
+                    areaCheckBox.addActionListener(e -> {
+                        userAreaTasks.addProperty(area, areaCheckBox.isSelected());
+                        debouncedSaveUserAreaProgress(username, userAreaTasks);
 
-                        if (questCheckBox.isSelected()) {
-                            questCheckBox.setForeground(Color.GREEN);
+                        if (areaCheckBox.isSelected()) {
+                            areaCheckBox.setForeground(Color.GREEN);
                         } else {
-                            questCheckBox.setForeground(Color.RED);
+                            areaCheckBox.setForeground(Color.RED);
                         }
                     });
 
-                    yearNode.add(new DefaultMutableTreeNode(questCheckBox));
+                    taskNode.add(new DefaultMutableTreeNode(areaCheckBox));
                 }
             });
 
-            root.add(yearNode);
+            root.add(taskNode);
         });
 
         JTree tree = new JTree(root);
@@ -313,50 +314,50 @@ public class QuestCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserQuestProgress(String username) {
-        File userQuestFile = new File(JSON_DATA_DIR + username + "_quests.json");
+    private JsonObject loadUserAreaTaskProgress(String username) {
+        File userAreaTaskFile = new File(JSON_DATA_DIR + username + "_area_tasks.json");
 
-        if (!userQuestFile.exists()) {
+        if (!userAreaTaskFile.exists()) {
             return new JsonObject();
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(userQuestFile))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(userAreaTaskFile))) {
             Gson gson = new Gson();
             return gson.fromJson(reader, JsonObject.class);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to load quest progress for user: " + username + ". Returning default data.", e);
+            LOGGER.log(Level.WARNING, "Failed to load area progress for user: " + username + ". Returning default data.", e);
             return new JsonObject();
         }
     }
 
-    private void saveUserQuestProgress(String username, String quest, boolean completed) {
-        File userQuestFile = new File(JSON_DATA_DIR + username + "_quests.json");
-        JsonObject userQuests = loadUserQuestProgress(username);
+    private void saveUserAreaTaskProgress(String username, String area, boolean completed) {
+        File userAreaFile = new File(JSON_DATA_DIR + username + "_area_tasks.json");
+        JsonObject userAreaTasks = loadUserAreaTaskProgress(username);
 
-        userQuests.addProperty(quest, completed);
+        userAreaTasks.addProperty(area, completed);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userQuestFile))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userAreaFile))) {
             Gson gson = new Gson();
-            gson.toJson(userQuests, writer);
+            gson.toJson(userAreaTasks, writer);
         } catch (IOException e) {
-            showMessage("Failed to save quest progress for user: " + username);
+            showMessage("Failed to save area progress for user: " + username);
         }
     }
 
-    private void debouncedSaveUserQuestProgress(String username, JsonObject userQuests) {
+    private void debouncedSaveUserAreaProgress(String username, JsonObject userAreaTasks) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserQuestProgress(username, userQuests));
+        saveTimer = new Timer(1000, e -> saveAllUserAreaTaskProgress(username, userAreaTasks));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserQuestProgress(String username, JsonObject userQuests) {
-        for (String quest : userQuests.keySet()) {
-            boolean completed = userQuests.get(quest).getAsBoolean();
-            saveUserQuestProgress(username, quest, completed);
+    private void saveAllUserAreaTaskProgress(String username, JsonObject userAreaTasks) {
+        for (String area : userAreaTasks.keySet()) {
+            boolean completed = userAreaTasks.get(area).getAsBoolean();
+            saveUserAreaTaskProgress(username, area, completed);
         }
     }
 }

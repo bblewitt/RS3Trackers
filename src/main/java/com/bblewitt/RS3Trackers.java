@@ -2,6 +2,7 @@ package main.java.com.bblewitt;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import main.java.com.bblewitt.pages.AreaTasksTrackerPanel;
 import main.java.com.bblewitt.pages.QuestCapeTrackerPanel;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class RS3Trackers {
+    private static final String VERSION = "1.2.0";
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
     private static int messageCode = 1;
@@ -26,7 +28,7 @@ public class RS3Trackers {
     }
 
     public void run() {
-        JFrame frame = new JFrame("RS3 Trackers");
+        JFrame frame = new JFrame("RS3 Trackers - Version " + VERSION);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(640, 360);
         frame.setLocationRelativeTo(null);
@@ -40,7 +42,7 @@ public class RS3Trackers {
         BackgroundPanel panel = new BackgroundPanel("/images/rs3.png");
         panel.setLayout(new BorderLayout());
 
-        JLabel titleLabel = new JLabel("RS3 Trackers", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("RS3 Trackers Main Menu", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
@@ -110,6 +112,11 @@ public class RS3Trackers {
                     frame.setSize(640, 720);
                     cardLayout.show(mainPanel, "questCapeTracker");
                 });
+            } else if (i == 2) {
+                navButton.addActionListener(e -> {
+                    frame.setSize(640, 720);
+                    cardLayout.show(mainPanel, "areaTasksTracker");
+                });
             } else {
                 int finalI = i;
                 navButton.addActionListener(e -> showErrorMessage("Page " + finalI + " not implemented yet."));
@@ -135,8 +142,14 @@ public class RS3Trackers {
             cardLayout.show(mainPanel, "mainMenu");
         });
 
+        JPanel areaTasksTrackerPanel = new AreaTasksTrackerPanel(e -> {
+            frame.setSize(640, 360);
+            cardLayout.show(mainPanel, "mainMenu");
+        });
+
         mainPanel.add(panel, "mainMenu");
         mainPanel.add(questCapeTrackerPanel, "questCapeTracker");
+        mainPanel.add(areaTasksTrackerPanel, "areaTasksTracker");
 
         cardLayout.show(mainPanel, "mainMenu");
 
