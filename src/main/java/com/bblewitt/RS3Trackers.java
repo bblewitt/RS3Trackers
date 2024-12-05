@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.pages.AreaTasksTrackerPanel;
 import main.java.com.bblewitt.pages.QuestCapeTrackerPanel;
-
+import main.java.com.bblewitt.pages.MasterQuestCapeTrackerPanel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -15,7 +15,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class RS3Trackers {
-    private static final String VERSION = "1.2.0";
+    private static final String VERSION = "1.3.0";
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
     private static int messageCode = 1;
@@ -70,7 +70,7 @@ public class RS3Trackers {
 
         int[][] buttonSizes = {
                 {40, 85},
-                {28, 28},
+                {40, 40},
                 {40, 85},
                 {40, 85},
                 {40, 85},
@@ -82,13 +82,10 @@ public class RS3Trackers {
 
             ImageIcon originalIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/button" + i + ".png")));
             Image originalImage = originalIcon.getImage();
-
             Image scaledImage = originalImage.getScaledInstance(buttonSizes[i - 1][0], buttonSizes[i - 1][1], Image.SCALE_SMOOTH);
-
             ImageIcon scaledIcon = new ImageIcon(scaledImage);
 
             navButton.setIcon(scaledIcon);
-
             navButton.setText("");
             navButton.setContentAreaFilled(false);
             navButton.setBorder(null);
@@ -107,6 +104,15 @@ public class RS3Trackers {
                 }
             });
 
+            switch (i) {
+                case 1 -> navButton.setToolTipText("Quest Cape Tracker");
+                case 2 -> navButton.setToolTipText("Area Tasks Tracker");
+                case 3 -> navButton.setToolTipText("Master Quest Cape Tracker");
+                case 4 -> navButton.setToolTipText("Max Cape Tracker");
+                case 5 -> navButton.setToolTipText("Completionist Cape / Trimmed Completionist Cape Tracker");
+                case 6 -> navButton.setToolTipText("Master Max Cape Tracker");
+            }
+
             if (i == 1) {
                 navButton.addActionListener(e -> {
                     frame.setSize(640, 720);
@@ -116,6 +122,11 @@ public class RS3Trackers {
                 navButton.addActionListener(e -> {
                     frame.setSize(640, 720);
                     cardLayout.show(mainPanel, "areaTasksTracker");
+                });
+            } else if (i == 3) {
+                navButton.addActionListener(e -> {
+                    frame.setSize(640, 720);
+                    cardLayout.show(mainPanel, "masterQuestCapeTracker");
                 });
             } else {
                 int finalI = i;
@@ -147,9 +158,15 @@ public class RS3Trackers {
             cardLayout.show(mainPanel, "mainMenu");
         });
 
+        JPanel masterQuestCapeTrackerPanel = new MasterQuestCapeTrackerPanel(e -> {
+            frame.setSize(640, 360);
+            cardLayout.show(mainPanel, "mainMenu");
+        });
+
         mainPanel.add(panel, "mainMenu");
         mainPanel.add(questCapeTrackerPanel, "questCapeTracker");
         mainPanel.add(areaTasksTrackerPanel, "areaTasksTracker");
+        mainPanel.add(masterQuestCapeTrackerPanel, "masterQuestCapeTracker");
 
         cardLayout.show(mainPanel, "mainMenu");
 

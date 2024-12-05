@@ -3,7 +3,7 @@ package main.java.com.bblewitt.pages;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.targets.QuestCapeTrackerTargetLevels;
+import main.java.com.bblewitt.targets.MasterQuestCapeTrackerTargetLevels;
 import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
 import main.java.com.bblewitt.util.CustomTreeCellRenderer;
 import main.java.com.bblewitt.util.XpTable;
@@ -19,11 +19,11 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class QuestCapeTrackerPanel extends JPanel {
-    private static final Logger LOGGER = Logger.getLogger(QuestCapeTrackerPanel.class.getName());
+public class MasterQuestCapeTrackerPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(MasterQuestCapeTrackerPanel.class.getName());
 
     private String generateMessageCode() {
         return UUID.randomUUID().toString();
@@ -56,16 +56,16 @@ public class QuestCapeTrackerPanel extends JPanel {
             {"Archaeology", "Necromancy"}
     };
 
-    public QuestCapeTrackerPanel(ActionListener backActionListener) {
+    public MasterQuestCapeTrackerPanel(ActionListener backActionListener) {
         setPreferredSize(new Dimension(640, 720));
         setBackground(new Color(11, 31, 41));
         setLayout(new BorderLayout());
 
-        JLabel questLabel = new JLabel("Quest Cape Tracker", SwingConstants.CENTER);
-        questLabel.setFont(new Font("Arial", Font.BOLD, 30));
-        questLabel.setForeground(Color.WHITE);
-        questLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(questLabel, BorderLayout.NORTH);
+        JLabel masterQuestLabel = new JLabel("Master Quest Cape Tracker", SwingConstants.CENTER);
+        masterQuestLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        masterQuestLabel.setForeground(Color.WHITE);
+        masterQuestLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        add(masterQuestLabel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -100,7 +100,7 @@ public class QuestCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateQuestChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateMasterQuestChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -161,7 +161,7 @@ public class QuestCapeTrackerPanel extends JPanel {
                             int targetLevel;
 
                             try {
-                                targetLevel = QuestCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
+                                targetLevel = MasterQuestCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
                                 showMessage("No target level found for skill: " + skillName);
                                 targetLevel = 99;
@@ -257,59 +257,59 @@ public class QuestCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateQuestChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateMasterQuestChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         rightPanel.removeAll();
 
         Gson gson = new Gson();
-        JsonObject baseQuests;
-        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/quests.json")) {
+        JsonObject baseMasterQuest;
+        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/master_quest.json")) {
             assert inputStream != null;
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-                baseQuests = gson.fromJson(reader, JsonObject.class);
+                baseMasterQuest = gson.fromJson(reader, JsonObject.class);
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to load base quests file", e);
+            LOGGER.log(Level.SEVERE, "Failed to load base master quest file", e);
             return;
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userQuests = loadUserQuestProgress(username);
+        JsonObject userMasterQuest = loadUserMasterQuestProgress(username);
 
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Quests");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Master Quest");
 
-        baseQuests.entrySet().forEach(entry -> {
+        baseMasterQuest.entrySet().forEach(entry -> {
             String year = entry.getKey();
-            JsonArray questsArray = entry.getValue().getAsJsonArray();
+            JsonArray masterQuestArray = entry.getValue().getAsJsonArray();
 
             DefaultMutableTreeNode yearNode = new DefaultMutableTreeNode(year);
 
-            questsArray.forEach(questElement -> {
-                if (questElement.isJsonPrimitive()) {
-                    String quest = questElement.getAsString();
-                    JCheckBox questCheckBox = new JCheckBox(quest);
-                    questCheckBox.setForeground(Color.WHITE);
-                    questCheckBox.setBackground(new Color(11, 31, 41));
-                    boolean completed = userQuests.has(quest) && userQuests.get(quest).getAsBoolean();
-                    questCheckBox.setSelected(completed);
+            masterQuestArray.forEach(masterQuestElement -> {
+                if (masterQuestElement.isJsonPrimitive()) {
+                    String masterQuest = masterQuestElement.getAsString();
+                    JCheckBox masterQuestCheckBox = new JCheckBox(masterQuest);
+                    masterQuestCheckBox.setForeground(Color.WHITE);
+                    masterQuestCheckBox.setBackground(new Color(11, 31, 41));
+                    boolean completed = userMasterQuest.has(masterQuest) && userMasterQuest.get(masterQuest).getAsBoolean();
+                    masterQuestCheckBox.setSelected(completed);
 
                     if (completed) {
-                        questCheckBox.setForeground(Color.GREEN);
+                        masterQuestCheckBox.setForeground(Color.GREEN);
                     } else {
-                        questCheckBox.setForeground(Color.RED);
+                        masterQuestCheckBox.setForeground(Color.RED);
                     }
 
-                    questCheckBox.addActionListener(e -> {
-                        userQuests.addProperty(quest, questCheckBox.isSelected());
-                        debouncedSaveUserQuestProgress(username, userQuests);
+                    masterQuestCheckBox.addActionListener(e -> {
+                        userMasterQuest.addProperty(masterQuest, masterQuestCheckBox.isSelected());
+                        debouncedSaveUserMasterQuestProgress(username, userMasterQuest);
 
-                        if (questCheckBox.isSelected()) {
-                            questCheckBox.setForeground(Color.GREEN);
+                        if (masterQuestCheckBox.isSelected()) {
+                            masterQuestCheckBox.setForeground(Color.GREEN);
                         } else {
-                            questCheckBox.setForeground(Color.RED);
+                            masterQuestCheckBox.setForeground(Color.RED);
                         }
                     });
 
-                    yearNode.add(new DefaultMutableTreeNode(questCheckBox));
+                    yearNode.add(new DefaultMutableTreeNode(masterQuestCheckBox));
                 }
             });
 
@@ -333,50 +333,50 @@ public class QuestCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserQuestProgress(String username) {
-        File userQuestFile = new File(JSON_DATA_DIR + username + "_quests.json");
+    private JsonObject loadUserMasterQuestProgress(String username) {
+        File userMasterQuestFile = new File(JSON_DATA_DIR + username + "_master_quest.json");
 
-        if (!userQuestFile.exists()) {
+        if (!userMasterQuestFile.exists()) {
             return new JsonObject();
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(userQuestFile))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(userMasterQuestFile))) {
             Gson gson = new Gson();
             return gson.fromJson(reader, JsonObject.class);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to load quest progress for user: " + username + ". Returning default data.", e);
+            LOGGER.log(Level.WARNING, "Failed to load master quest cape progress for user: " + username + ". Returning default data.", e);
             return new JsonObject();
         }
     }
 
-    private void saveUserQuestProgress(String username, String quest, boolean completed) {
-        File userQuestFile = new File(JSON_DATA_DIR + username + "_quests.json");
-        JsonObject userQuests = loadUserQuestProgress(username);
+    private void saveUserMasterQuestProgress(String username, String masterQuest, boolean completed) {
+        File userMasterQuestFile = new File(JSON_DATA_DIR + username + "_master_quest.json");
+        JsonObject userMasterQuest = loadUserMasterQuestProgress(username);
 
-        userQuests.addProperty(quest, completed);
+        userMasterQuest.addProperty(masterQuest, completed);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userQuestFile))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userMasterQuestFile))) {
             Gson gson = new Gson();
-            gson.toJson(userQuests, writer);
+            gson.toJson(userMasterQuest, writer);
         } catch (IOException e) {
-            showMessage("Failed to save quest progress for user: " + username);
+            showMessage("Failed to save master quest cape progress for user: " + username);
         }
     }
 
-    private void debouncedSaveUserQuestProgress(String username, JsonObject userQuests) {
+    private void debouncedSaveUserMasterQuestProgress(String username, JsonObject userMasterQuest) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserQuestProgress(username, userQuests));
+        saveTimer = new Timer(1000, e -> saveAllUserMasterQuestProgress(username, userMasterQuest));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserQuestProgress(String username, JsonObject userQuests) {
-        for (String quest : userQuests.keySet()) {
-            boolean completed = userQuests.get(quest).getAsBoolean();
-            saveUserQuestProgress(username, quest, completed);
+    private void saveAllUserMasterQuestProgress(String username, JsonObject userMasterQuest) {
+        for (String masterQuest : userMasterQuest.keySet()) {
+            boolean completed = userMasterQuest.get(masterQuest).getAsBoolean();
+            saveUserMasterQuestProgress(username, masterQuest, completed);
         }
     }
 }

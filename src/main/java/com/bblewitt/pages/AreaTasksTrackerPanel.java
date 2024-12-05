@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import main.java.com.bblewitt.targets.AreaTasksTrackerTargetLevels;
 import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
 import main.java.com.bblewitt.util.CustomTreeCellRenderer;
+import main.java.com.bblewitt.util.XpTable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -102,12 +103,8 @@ public class AreaTasksTrackerPanel extends JPanel {
             SwingUtilities.invokeLater(() -> populateAreaChecklist(rightPanel, usernameDropdown));
         });
 
-        JScrollPane scrollPane = new JScrollPane(rightPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-
         bottomCenterPanel.add(leftPanel);
-        bottomCenterPanel.add(scrollPane);
+        bottomCenterPanel.add(rightPanel);
         centerPanel.add(bottomCenterPanel);
 
         JButton backButton = new JButton("Back to Main Menu");
@@ -157,26 +154,29 @@ public class AreaTasksTrackerPanel extends JPanel {
                     for (String skillName : row) {
                         JsonObject skillData = jsonObject.getAsJsonObject(skillName);
 
-                        if (skillData != null && skillData.has("level")) {
+                        if (skillData != null && skillData.has("level") && skillData.has("rank") && skillData.has("xp")) {
                             int currentLevel = skillData.get("level").getAsInt();
+                            int rank = skillData.get("rank").getAsInt();
+                            int currentXp = skillData.get("xp").getAsInt();
+                            int targetLevel;
 
-                            int targetLevel = 99;
                             try {
                                 targetLevel = AreaTasksTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
                                 showMessage("No target level found for skill: " + skillName);
+                                targetLevel = 99;
                             }
 
-                            BufferedImage skillIcon = loadSkillIcon(skillName.toLowerCase());
-                            if (skillIcon != null) {
-                                ImageIcon icon = new ImageIcon(skillIcon.getScaledInstance(15, 15, Image.SCALE_SMOOTH));
+                            int targetXp = XpTable.getTargetXp(targetLevel, "Invention".equalsIgnoreCase(skillName));
 
-                                leftPanel.add(createSkillPanel(currentLevel, targetLevel, icon));
+                            ImageIcon skillIcon = loadSkillIcon(skillName.toLowerCase());
+                            if (skillIcon != null) {
+                                leftPanel.add(createSkillPanel(currentLevel, targetLevel, rank, currentXp, targetXp, skillIcon));
                             } else {
                                 showMessage("Icon for " + skillName + " is null.");
                             }
                         } else {
-                            showMessage("No level data for skill: " + skillName);
+                            showMessage("Incomplete data for skill: " + skillName);
                         }
                     }
                 }
@@ -192,14 +192,17 @@ public class AreaTasksTrackerPanel extends JPanel {
         }
     }
 
-    private BufferedImage loadSkillIcon(String skillName) {
+    private ImageIcon loadSkillIcon(String skillName) {
         try {
             String iconPath = "/images/" + skillName + ".png";
-
             InputStream inputStream = getClass().getResourceAsStream(iconPath);
 
             if (inputStream != null) {
-                return ImageIO.read(inputStream);
+                BufferedImage originalImage = ImageIO.read(inputStream);
+                Image scaledImage = originalImage.getScaledInstance(15, 15, Image.SCALE_SMOOTH);
+                ImageIcon icon = new ImageIcon(scaledImage);
+                icon.setDescription(capitalizeSkillName(skillName));
+                return icon;
             } else {
                 showMessage("Icon not found: " + iconPath);
                 return null;
@@ -210,7 +213,14 @@ public class AreaTasksTrackerPanel extends JPanel {
         }
     }
 
-    private JPanel createSkillPanel(int currentLevel, int targetLevel, ImageIcon icon) {
+    private String capitalizeSkillName(String skillName) {
+        if (skillName == null || skillName.isEmpty()) {
+            return skillName;
+        }
+        return skillName.substring(0, 1).toUpperCase() + skillName.substring(1);
+    }
+
+    private JPanel createSkillPanel(int currentLevel, int targetLevel, int rank, int currentXp, int targetXp, ImageIcon skillIcon) {
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
         panel.setBackground(new Color(11, 31, 41));
@@ -221,20 +231,29 @@ public class AreaTasksTrackerPanel extends JPanel {
         gbc.insets = new Insets(1, 1, 1, 1);
         gbc.anchor = GridBagConstraints.CENTER;
 
-        JLabel skillIconLabel = new JLabel(icon);
+        JLabel skillIconLabel = new JLabel(skillIcon);
         panel.add(skillIconLabel, gbc);
 
         gbc.gridy = 1;
-
         JLabel skillLevelLabel = new JLabel(currentLevel + "/" + targetLevel);
         skillLevelLabel.setForeground(Color.WHITE);
         panel.add(skillLevelLabel, gbc);
+
+        int xpRemaining = (currentLevel >= targetLevel) ? 0 : targetXp - currentXp;
+        String skillName = skillIcon.getDescription() != null ? skillIcon.getDescription() : "Unknown Skill";
+
+        String tooltip = String.format(
+                "<html>%s<br>Rank: %,d<br>Current XP: %,d<br>Target XP: %,d<br>XP Remaining: %,d</html>",
+                skillName, rank, currentXp, targetXp, xpRemaining
+        );
+        panel.setToolTipText(tooltip);
 
         if (currentLevel >= targetLevel) {
             panel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 3));
         } else {
             panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         }
+
         return panel;
     }
 
