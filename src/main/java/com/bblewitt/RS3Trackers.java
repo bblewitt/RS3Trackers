@@ -3,6 +3,7 @@ package main.java.com.bblewitt;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.pages.AreaTasksTrackerPanel;
+import main.java.com.bblewitt.pages.MaxCapeTrackerPanel;
 import main.java.com.bblewitt.pages.QuestCapeTrackerPanel;
 import main.java.com.bblewitt.pages.MasterQuestCapeTrackerPanel;
 import javax.swing.*;
@@ -15,7 +16,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class RS3Trackers {
-    private static final String VERSION = "1.3.0";
+    private static final String VERSION = "1.4.0";
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
     private static int messageCode = 1;
@@ -128,6 +129,11 @@ public class RS3Trackers {
                     frame.setSize(640, 720);
                     cardLayout.show(mainPanel, "masterQuestCapeTracker");
                 });
+            } else if (i == 4) {
+                navButton.addActionListener(e -> {
+                    frame.setSize(640, 720);
+                    cardLayout.show(mainPanel, "maxCapeTracker");
+                });
             } else {
                 int finalI = i;
                 navButton.addActionListener(e -> showErrorMessage("Page " + finalI + " not implemented yet."));
@@ -163,10 +169,16 @@ public class RS3Trackers {
             cardLayout.show(mainPanel, "mainMenu");
         });
 
+        JPanel maxCapeTrackerPanel = new MaxCapeTrackerPanel(e -> {
+            frame.setSize(640, 360);
+            cardLayout.show(mainPanel, "mainMenu");
+        });
+
         mainPanel.add(panel, "mainMenu");
         mainPanel.add(questCapeTrackerPanel, "questCapeTracker");
         mainPanel.add(areaTasksTrackerPanel, "areaTasksTracker");
         mainPanel.add(masterQuestCapeTrackerPanel, "masterQuestCapeTracker");
+        mainPanel.add(maxCapeTrackerPanel, "maxCapeTracker");
 
         cardLayout.show(mainPanel, "mainMenu");
 
