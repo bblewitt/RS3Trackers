@@ -2,10 +2,8 @@ package main.java.com.bblewitt;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.pages.AreaTasksTrackerPanel;
-import main.java.com.bblewitt.pages.MaxCapeTrackerPanel;
-import main.java.com.bblewitt.pages.QuestCapeTrackerPanel;
-import main.java.com.bblewitt.pages.MasterQuestCapeTrackerPanel;
+import main.java.com.bblewitt.pages.*;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -16,7 +14,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class RS3Trackers {
-    private static final String VERSION = "1.4.0";
+    private static final String VERSION = "1.5.0";
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
     private static int messageCode = 1;
@@ -134,6 +132,11 @@ public class RS3Trackers {
                     frame.setSize(640, 720);
                     cardLayout.show(mainPanel, "maxCapeTracker");
                 });
+            } else if (i == 5) {
+                navButton.addActionListener(e -> {
+                    frame.setSize(640, 720);
+                    cardLayout.show(mainPanel, "compCapeTracker");
+                });
             } else {
                 int finalI = i;
                 navButton.addActionListener(e -> showErrorMessage("Page " + finalI + " not implemented yet."));
@@ -174,11 +177,17 @@ public class RS3Trackers {
             cardLayout.show(mainPanel, "mainMenu");
         });
 
+        JPanel compCapeTrackerPanel = new CompCapeTrackerPanel(e -> {
+            frame.setSize(640, 360);
+            cardLayout.show(mainPanel, "mainMenu");
+        });
+
         mainPanel.add(panel, "mainMenu");
         mainPanel.add(questCapeTrackerPanel, "questCapeTracker");
         mainPanel.add(areaTasksTrackerPanel, "areaTasksTracker");
         mainPanel.add(masterQuestCapeTrackerPanel, "masterQuestCapeTracker");
         mainPanel.add(maxCapeTrackerPanel, "maxCapeTracker");
+        mainPanel.add(compCapeTrackerPanel, "compCapeTracker");
 
         cardLayout.show(mainPanel, "mainMenu");
 
@@ -241,6 +250,17 @@ public class RS3Trackers {
         }
 
         String[] lines = content.toString().split("\n");
+        final JsonObject hiscoreData = getJsonObject(lines);
+
+        String outputFileName = outputDir + username + ".json";
+        Gson gson = new Gson();
+        try (FileWriter writer = new FileWriter(outputFileName)) {
+            gson.toJson(hiscoreData, writer);
+        }
+        return outputFileName;
+    }
+
+    private static JsonObject getJsonObject(String[] lines) {
         JsonObject hiscoreData = new JsonObject();
         String[] skills = {
                 "Overall", "Attack", "Defence", "Strength", "Constitution", "Ranged", "Prayer",
@@ -257,13 +277,7 @@ public class RS3Trackers {
             skillData.addProperty("xp", values[2]);
             hiscoreData.add(skills[i], skillData);
         }
-
-        String outputFileName = outputDir + username + ".json";
-        Gson gson = new Gson();
-        try (FileWriter writer = new FileWriter(outputFileName)) {
-            gson.toJson(hiscoreData, writer);
-        }
-        return outputFileName;
+        return hiscoreData;
     }
 
     private static void showErrorMessage(String message) {

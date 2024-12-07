@@ -5,9 +5,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.targets.AreaTasksTrackerTargetLevels;
 import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
+import main.java.com.bblewitt.util.CustomToolTip;
 import main.java.com.bblewitt.util.CustomTreeCellRenderer;
 import main.java.com.bblewitt.util.XpTable;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -24,6 +24,17 @@ import java.util.logging.Logger;
 
 public class AreaTasksTrackerPanel extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(AreaTasksTrackerPanel.class.getName());
+    private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
+    private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
+
+    private final JPanel leftPanel;
+    private final JPanel rightPanel;
+    private Timer saveTimer;
+    private final JPanel skillsProgressPanel;
+    private final JLabel skillsProgressLabel;
+    private final JLabel taskProgressLabel;
+    private int completedTasks = 0;
+    private int totalTasks = 0;
 
     private String generateMessageCode() {
         return UUID.randomUUID().toString();
@@ -35,13 +46,6 @@ public class AreaTasksTrackerPanel extends JPanel {
         JOptionPane.showMessageDialog(this, fullMessage, "Error", JOptionPane.ERROR_MESSAGE);
         LOGGER.log(Level.SEVERE, "Message Code: " + code + " - " + message);
     }
-
-    private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
-    private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
-
-    private final JPanel leftPanel;
-    private final JPanel rightPanel;
-    private Timer saveTimer;
 
     private static final String[][] SKILL_ORDER = {
             {"Attack", "Constitution", "Mining"},
@@ -62,7 +66,7 @@ public class AreaTasksTrackerPanel extends JPanel {
         setLayout(new BorderLayout());
 
         JLabel areaLabel = new JLabel("Area Tasks Tracker", SwingConstants.CENTER);
-        areaLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        areaLabel.setFont(new Font("Runescape UF", Font.BOLD, 30));
         areaLabel.setForeground(Color.WHITE);
         areaLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         add(areaLabel, BorderLayout.NORTH);
@@ -88,14 +92,43 @@ public class AreaTasksTrackerPanel extends JPanel {
         bottomCenterPanel.setPreferredSize(new Dimension(640, 400));
         bottomCenterPanel.setBackground(new Color(11, 31, 41));
 
-        leftPanel = new JPanel();
-        leftPanel.setLayout(new GridLayout(10, 3, 5, 5));
+        skillsProgressPanel = new JPanel(new BorderLayout());
+        skillsProgressPanel.setBackground(new Color(11, 31, 41));
+        skillsProgressLabel = new JLabel("Skills - 0/0", SwingConstants.CENTER);
+        skillsProgressLabel.setForeground(Color.WHITE);
+        skillsProgressLabel.setFont(new Font("Runescape UF", Font.BOLD, 16));
+        skillsProgressPanel.add(skillsProgressLabel, BorderLayout.CENTER);
+        skillsProgressPanel.setOpaque(false);
+
+        leftPanel = new JPanel() {
+            @Override
+            public void doLayout() {
+                super.doLayout();
+                if (getComponentCount() > 0 && getComponent(0) instanceof JPanel) {
+                    getComponent(0).setBounds(0, 0, getWidth(), getHeight() / 10);
+                }
+            }
+        };
+        leftPanel.add(new JPanel() {{
+            setOpaque(false);
+        }});
+        leftPanel.add(skillsProgressPanel);
+        leftPanel.add(new JPanel() {{
+            setOpaque(false);
+        }});
+        leftPanel.setLayout(new GridLayout(11, 3, 5, 5));
         leftPanel.setBackground(new Color(11, 31, 41));
 
         rightPanel = new JPanel();
-        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        rightPanel.setLayout(new BorderLayout());
         rightPanel.setBackground(new Color(11, 31, 41));
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        rightPanel.setOpaque(false);
+
+        taskProgressLabel = new JLabel("Task List - 0/0", SwingConstants.CENTER);
+        taskProgressLabel.setForeground(Color.WHITE);
+        taskProgressLabel.setFont(new Font("Runescape UF", Font.BOLD, 16));
+        taskProgressLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        rightPanel.add(taskProgressLabel, BorderLayout.NORTH);
 
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
@@ -149,15 +182,24 @@ public class AreaTasksTrackerPanel extends JPanel {
                 JsonObject jsonObject = gson.fromJson(data, JsonObject.class);
 
                 leftPanel.removeAll();
+                leftPanel.add(skillsProgressPanel);
+                leftPanel.add(new JPanel() {{
+                    setOpaque(false);
+                }});
+                leftPanel.add(new JPanel() {{
+                    setOpaque(false);
+                }});
+
+                int totalSkills = 0;
+                int targetsReached = 0;
 
                 for (String[] row : SKILL_ORDER) {
                     for (String skillName : row) {
+                        totalSkills++;
                         JsonObject skillData = jsonObject.getAsJsonObject(skillName);
 
                         if (skillData != null && skillData.has("level") && skillData.has("rank") && skillData.has("xp")) {
                             int currentLevel = skillData.get("level").getAsInt();
-                            int rank = skillData.get("rank").getAsInt();
-                            int currentXp = skillData.get("xp").getAsInt();
                             int targetLevel;
 
                             try {
@@ -167,11 +209,15 @@ public class AreaTasksTrackerPanel extends JPanel {
                                 targetLevel = 99;
                             }
 
-                            int targetXp = XpTable.getTargetXp(targetLevel, "Invention".equalsIgnoreCase(skillName));
+                            if (currentLevel >= targetLevel) {
+                                targetsReached++;
+                            }
 
+                            int targetXp = XpTable.getTargetXp(targetLevel, "Invention".equalsIgnoreCase(skillName));
                             ImageIcon skillIcon = loadSkillIcon(skillName.toLowerCase());
                             if (skillIcon != null) {
-                                leftPanel.add(createSkillPanel(currentLevel, targetLevel, rank, currentXp, targetXp, skillIcon));
+                                leftPanel.add(createSkillPanel(currentLevel, targetLevel, skillData.get("rank").getAsInt(),
+                                        skillData.get("xp").getAsInt(), targetXp, skillIcon));
                             } else {
                                 showMessage("Icon for " + skillName + " is null.");
                             }
@@ -180,6 +226,8 @@ public class AreaTasksTrackerPanel extends JPanel {
                         }
                     }
                 }
+
+                skillsProgressLabel.setText(String.format("Skills - %d/%d", targetsReached, totalSkills));
 
                 leftPanel.revalidate();
                 leftPanel.repaint();
@@ -221,22 +269,32 @@ public class AreaTasksTrackerPanel extends JPanel {
     }
 
     private JPanel createSkillPanel(int currentLevel, int targetLevel, int rank, int currentXp, int targetXp, ImageIcon skillIcon) {
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel() {
+            @Override
+            public JToolTip createToolTip() {
+                return new CustomToolTip();
+            }
+        };
+
         panel.setLayout(new GridBagLayout());
         panel.setBackground(new Color(11, 31, 41));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(1, 1, 1, 1);
+        gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.CENTER;
 
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
         JLabel skillIconLabel = new JLabel(skillIcon);
         panel.add(skillIconLabel, gbc);
 
-        gbc.gridy = 1;
-        JLabel skillLevelLabel = new JLabel(currentLevel + "/" + targetLevel);
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;
+        JLabel skillLevelLabel = new JLabel(currentLevel + " / " + targetLevel);
         skillLevelLabel.setForeground(Color.WHITE);
+        skillLevelLabel.setFont(new Font("Runescape UF", Font.PLAIN, 14));
         panel.add(skillLevelLabel, gbc);
 
         int xpRemaining = (currentLevel >= targetLevel) ? 0 : targetXp - currentXp;
@@ -258,14 +316,12 @@ public class AreaTasksTrackerPanel extends JPanel {
     }
 
     private void populateAreaChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
-        rightPanel.removeAll();
-
         Gson gson = new Gson();
-        JsonObject baseAreaTasks;
+        JsonObject baseTaskLists;
         try (InputStream inputStream = getClass().getResourceAsStream("/json_files/area_tasks.json")) {
             assert inputStream != null;
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
-                baseAreaTasks = gson.fromJson(reader, JsonObject.class);
+                baseTaskLists = gson.fromJson(reader, JsonObject.class);
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to load base area tasks file", e);
@@ -273,48 +329,59 @@ public class AreaTasksTrackerPanel extends JPanel {
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userAreaTasks = loadUserAreaTaskProgress(username);
+        JsonObject userTaskLists = loadUserAreaTaskProgress(username);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Area Tasks");
 
-        baseAreaTasks.entrySet().forEach(entry -> {
+        totalTasks = 0;
+        completedTasks = 0;
+
+        baseTaskLists.entrySet().forEach(entry -> {
             String task = entry.getKey();
-            JsonArray areaTasksArray = entry.getValue().getAsJsonArray();
+            JsonArray taskListArray = entry.getValue().getAsJsonArray();
 
             DefaultMutableTreeNode taskNode = new DefaultMutableTreeNode(task);
 
-            areaTasksArray.forEach(areaElement -> {
-                if (areaElement.isJsonPrimitive()) {
-                    String area = areaElement.getAsString();
-                    JCheckBox areaCheckBox = new JCheckBox(area);
-                    areaCheckBox.setForeground(Color.WHITE);
-                    areaCheckBox.setBackground(new Color(11, 31, 41));
-                    boolean completed = userAreaTasks.has(area) && userAreaTasks.get(area).getAsBoolean();
-                    areaCheckBox.setSelected(completed);
+            taskListArray.forEach(taskListElement -> {
+                if (taskListElement.isJsonPrimitive()) {
+                    String taskList = taskListElement.getAsString();
+                    JCheckBox taskListCheckBox = new JCheckBox(taskList);
+                    taskListCheckBox.setForeground(Color.WHITE);
+                    taskListCheckBox.setBackground(new Color(11, 31, 41));
+                    boolean completed = userTaskLists.has(taskList) && userTaskLists.get(taskList).getAsBoolean();
+                    taskListCheckBox.setSelected(completed);
 
+                    totalTasks++;
                     if (completed) {
-                        areaCheckBox.setForeground(Color.GREEN);
+                        completedTasks++;
+                        taskListCheckBox.setForeground(Color.GREEN);
                     } else {
-                        areaCheckBox.setForeground(Color.RED);
+                        taskListCheckBox.setForeground(Color.RED);
                     }
 
-                    areaCheckBox.addActionListener(e -> {
-                        userAreaTasks.addProperty(area, areaCheckBox.isSelected());
-                        debouncedSaveUserAreaProgress(username, userAreaTasks);
+                    taskListCheckBox.addActionListener(e -> {
+                        userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
+                        debouncedSaveUserAreaProgress(username, userTaskLists);
 
-                        if (areaCheckBox.isSelected()) {
-                            areaCheckBox.setForeground(Color.GREEN);
+                        if (taskListCheckBox.isSelected()) {
+                            completedTasks++;
+                            taskListCheckBox.setForeground(Color.GREEN);
                         } else {
-                            areaCheckBox.setForeground(Color.RED);
+                            completedTasks--;
+                            taskListCheckBox.setForeground(Color.RED);
                         }
+
+                        taskProgressLabel.setText(String.format("Task List - %d/%d", completedTasks, totalTasks));
                     });
 
-                    taskNode.add(new DefaultMutableTreeNode(areaCheckBox));
+                    taskNode.add(new DefaultMutableTreeNode(taskListCheckBox));
                 }
             });
 
             root.add(taskNode);
         });
+
+        taskProgressLabel.setText(String.format("Task List - %d/%d", completedTasks, totalTasks));
 
         JTree tree = new JTree(root);
         tree.setBackground(new Color(11, 31, 41));
@@ -328,6 +395,7 @@ public class AreaTasksTrackerPanel extends JPanel {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         rightPanel.setLayout(new BorderLayout());
+        rightPanel.add(taskProgressLabel, BorderLayout.NORTH);
         rightPanel.add(scrollPane, BorderLayout.CENTER);
         rightPanel.revalidate();
         rightPanel.repaint();
