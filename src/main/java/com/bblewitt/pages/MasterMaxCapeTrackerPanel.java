@@ -3,7 +3,7 @@ package main.java.com.bblewitt.pages;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.targets.TrimCompCapeTrackerTargetLevels;
+import main.java.com.bblewitt.targets.MasterMaxCapeTrackerTargetLevels;
 import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
 import main.java.com.bblewitt.util.CustomToolTip;
 import main.java.com.bblewitt.util.CustomTreeCellRenderer;
@@ -27,8 +27,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class TrimCompCapeTrackerPanel extends JPanel {
-    private static final Logger LOGGER = Logger.getLogger(TrimCompCapeTrackerPanel.class.getName());
+public class MasterMaxCapeTrackerPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(MasterMaxCapeTrackerPanel.class.getName());
     private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
     private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
 
@@ -67,12 +67,12 @@ public class TrimCompCapeTrackerPanel extends JPanel {
             {"Archaeology", "Necromancy"}
     };
 
-    public TrimCompCapeTrackerPanel(ActionListener backActionListener) {
+    public MasterMaxCapeTrackerPanel(ActionListener backActionListener) {
         setPreferredSize(new Dimension(640, 720));
         setBackground(new Color(11, 31, 41));
         setLayout(new BorderLayout());
 
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/trimmed_completionist_cape_tracker.png")));
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/master_max_cape_tracker.png")));
         JLabel imageLabel = new JLabel(imageIcon, SwingConstants.CENTER);
         imageLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -142,7 +142,7 @@ public class TrimCompCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateMaxCapeChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateMasterMaxCapeChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -213,7 +213,7 @@ public class TrimCompCapeTrackerPanel extends JPanel {
                             int targetLevel;
 
                             try {
-                                targetLevel = TrimCompCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
+                                targetLevel = MasterMaxCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
                                 showMessage("No target level found for skill: " + skillName);
                                 targetLevel = 99;
@@ -329,10 +329,10 @@ public class TrimCompCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateMaxCapeChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateMasterMaxCapeChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
-        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/trim_comp_cape.json")) {
+        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/master_max_cape.json")) {
             assert inputStream != null;
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
                 baseTaskLists = gson.fromJson(reader, JsonObject.class);
@@ -343,7 +343,7 @@ public class TrimCompCapeTrackerPanel extends JPanel {
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userTaskLists = loadUserMaxCapeProgress(username);
+        JsonObject userTaskLists = loadUserMasterMaxCapeProgress(username);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Max Cape");
 
@@ -376,7 +376,7 @@ public class TrimCompCapeTrackerPanel extends JPanel {
 
                     taskListCheckBox.addActionListener(e -> {
                         userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
-                        debouncedSaveUserMaxCapeProgress(username, userTaskLists);
+                        debouncedSaveUserMasterMaxCapeProgress(username, userTaskLists);
 
                         if (taskListCheckBox.isSelected()) {
                             completedTasks++;
@@ -420,8 +420,8 @@ public class TrimCompCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserMaxCapeProgress(String username) {
-        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_trim_comp_cape.json");
+    private JsonObject loadUserMasterMaxCapeProgress(String username) {
+        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_master_max_cape.json");
 
         if (!userMaxCapeFile.exists()) {
             return new JsonObject();
@@ -436,9 +436,9 @@ public class TrimCompCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void saveUserMaxCapeProgress(String username, String taskList, boolean completed) {
-        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_trim_comp_cape.json");
-        JsonObject userTaskLists = loadUserMaxCapeProgress(username);
+    private void saveUserMasterMaxCapeProgress(String username, String taskList, boolean completed) {
+        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_master_max_cape.json");
+        JsonObject userTaskLists = loadUserMasterMaxCapeProgress(username);
 
         userTaskLists.addProperty(taskList, completed);
 
@@ -450,20 +450,20 @@ public class TrimCompCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void debouncedSaveUserMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void debouncedSaveUserMasterMaxCapeProgress(String username, JsonObject userTaskLists) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserMaxCapeProgress(username, userTaskLists));
+        saveTimer = new Timer(1000, e -> saveAllUserMasterMaxCapeProgress(username, userTaskLists));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void saveAllUserMasterMaxCapeProgress(String username, JsonObject userTaskLists) {
         for (String taskList : userTaskLists.keySet()) {
             boolean completed = userTaskLists.get(taskList).getAsBoolean();
-            saveUserMaxCapeProgress(username, taskList, completed);
+            saveUserMasterMaxCapeProgress(username, taskList, completed);
         }
     }
 

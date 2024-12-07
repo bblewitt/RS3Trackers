@@ -9,6 +9,10 @@ import main.java.com.bblewitt.util.CustomToolTip;
 import main.java.com.bblewitt.util.CustomTreeCellRenderer;
 import main.java.com.bblewitt.util.XpTable;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -18,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -35,6 +40,8 @@ public class QuestCapeTrackerPanel extends JPanel {
     private final JLabel taskProgressLabel;
     private int completedTasks = 0;
     private int totalTasks = 0;
+    final List<JCheckBox> taskCheckBoxes = new ArrayList<>();
+    private boolean isSkillsSoundPlaying = false;
 
     private String generateMessageCode() {
         return UUID.randomUUID().toString();
@@ -65,11 +72,13 @@ public class QuestCapeTrackerPanel extends JPanel {
         setBackground(new Color(11, 31, 41));
         setLayout(new BorderLayout());
 
-        JLabel questLabel = new JLabel("Quest Cape Tracker", SwingConstants.CENTER);
-        questLabel.setFont(new Font("Runescape UF", Font.BOLD, 30));
-        questLabel.setForeground(Color.WHITE);
-        questLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        add(questLabel, BorderLayout.NORTH);
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/quest_cape_tracker.png")));
+        JLabel imageLabel = new JLabel(imageIcon, SwingConstants.CENTER);
+        imageLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        headerPanel.add(imageLabel, BorderLayout.CENTER);
+        add(headerPanel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -192,6 +201,7 @@ public class QuestCapeTrackerPanel extends JPanel {
 
                 int totalSkills = 0;
                 int targetsReached = 0;
+                int completedSkills = 0;
 
                 for (String[] row : SKILL_ORDER) {
                     for (String skillName : row) {
@@ -211,6 +221,7 @@ public class QuestCapeTrackerPanel extends JPanel {
 
                             if (currentLevel >= targetLevel) {
                                 targetsReached++;
+                                completedSkills++;
                             }
 
                             int targetXp = XpTable.getTargetXp(targetLevel, "Invention".equalsIgnoreCase(skillName));
@@ -228,9 +239,12 @@ public class QuestCapeTrackerPanel extends JPanel {
                 }
 
                 skillsProgressLabel.setText(String.format("Skills - %d/%d", targetsReached, totalSkills));
-
                 leftPanel.revalidate();
                 leftPanel.repaint();
+
+                if (completedSkills == totalSkills && !isSkillsSoundPlaying) {
+                    playSkillsCompletionSound();
+                }
 
             } catch (IOException e) {
                 showMessage("An error occurred while loading the skills data.");
@@ -346,6 +360,7 @@ public class QuestCapeTrackerPanel extends JPanel {
                 if (taskListElement.isJsonPrimitive()) {
                     String taskList = taskListElement.getAsString();
                     JCheckBox taskListCheckBox = new JCheckBox(taskList);
+                    taskCheckBoxes.add(taskListCheckBox);
                     taskListCheckBox.setForeground(Color.WHITE);
                     taskListCheckBox.setBackground(new Color(11, 31, 41));
                     boolean completed = userTaskLists.has(taskList) && userTaskLists.get(taskList).getAsBoolean();
@@ -372,6 +387,10 @@ public class QuestCapeTrackerPanel extends JPanel {
                         }
 
                         taskProgressLabel.setText(String.format("Quests - %d/%d", completedTasks, totalTasks));
+
+                        if (completedTasks == totalTasks) {
+                            playTaskListCompletionSound();
+                        }
                     });
 
                     taskNode.add(new DefaultMutableTreeNode(taskListCheckBox));
@@ -445,6 +464,63 @@ public class QuestCapeTrackerPanel extends JPanel {
         for (String quest : userQuests.keySet()) {
             boolean completed = userQuests.get(quest).getAsBoolean();
             saveUserQuestProgress(username, quest, completed);
+        }
+    }
+
+    private void playSkillsCompletionSound() {
+        if (isSkillsSoundPlaying) {
+            return;
+        }
+        isSkillsSoundPlaying = true;
+
+        try {
+            String soundPath = "/sounds/skill_list.wav";
+            InputStream soundStream = getClass().getResourceAsStream(soundPath);
+
+            if (soundStream != null) {
+                BufferedInputStream bufferedStream = new BufferedInputStream(soundStream);
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(bufferedStream);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioInput);
+
+                clip.addLineListener(event -> {
+                    if (event.getType() == LineEvent.Type.STOP) {
+                        isSkillsSoundPlaying = false;
+                        clip.close();
+                    }
+                });
+
+                clip.start();
+            } else {
+                LOGGER.log(Level.WARNING, "Sound file not found: " + soundPath);
+                isSkillsSoundPlaying = false;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error playing skills completion sound", e);
+            isSkillsSoundPlaying = false;
+        }
+    }
+
+    private void playTaskListCompletionSound() {
+        if (isSkillsSoundPlaying) {
+            return;
+        }
+        try {
+            String soundPath = "/sounds/task_list.wav";
+            InputStream soundStream = getClass().getResourceAsStream(soundPath);
+
+            if (soundStream != null) {
+                BufferedInputStream bufferedStream = new BufferedInputStream(soundStream);
+                AudioInputStream audioInput = AudioSystem.getAudioInputStream(bufferedStream);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioInput);
+
+                clip.start();
+            } else {
+                LOGGER.log(Level.WARNING, "Sound file not found: " + soundPath);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error playing task list sound", e);
         }
     }
 }

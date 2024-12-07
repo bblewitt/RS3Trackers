@@ -3,7 +3,6 @@ package main.java.com.bblewitt;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.pages.*;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -14,7 +13,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class RS3Trackers {
-    private static final String VERSION = "1.6.0";
+    private static final String VERSION = "1.7.0";
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
     private static int messageCode = 1;
@@ -41,11 +40,15 @@ public class RS3Trackers {
         BackgroundPanel panel = new BackgroundPanel("/images/rs3.png");
         panel.setLayout(new BorderLayout());
 
-        JLabel titleLabel = new JLabel("RS3 Trackers Main Menu", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
-        panel.add(titleLabel, BorderLayout.NORTH);
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/main_menu.png")));
+        JLabel imageLabel = new JLabel(imageIcon, SwingConstants.CENTER);
+        imageLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        headerPanel.add(imageLabel, BorderLayout.CENTER);
+
+        panel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setOpaque(false);
@@ -55,7 +58,7 @@ public class RS3Trackers {
         inputPanel.setOpaque(false);
         JLabel usernameLabel = new JLabel("Enter Runescape Username:");
         usernameLabel.setForeground(Color.WHITE);
-        JTextField usernameField = new JTextField(15);
+        JTextField usernameField = new JTextField(10);
         JButton fetchButton = new JButton("Update Hiscores");
 
         inputPanel.add(usernameLabel);
@@ -69,7 +72,7 @@ public class RS3Trackers {
 
         int[][] buttonSizes = {
                 {40, 85},
-                {40, 40},
+                {40, 85},
                 {40, 85},
                 {40, 85},
                 {40, 85},
@@ -145,8 +148,10 @@ public class RS3Trackers {
                     cardLayout.show(mainPanel, "trimCompCapeTracker");
                 });
             } else {
-                int finalI = i;
-                navButton.addActionListener(e -> showErrorMessage("Page " + finalI + " not implemented yet."));
+                navButton.addActionListener(e -> {
+                    frame.setSize(640, 720);
+                    cardLayout.show(mainPanel, "masterMaxCapeTracker");
+                });
             }
             buttonPanel.add(navButton);
         }
@@ -194,6 +199,11 @@ public class RS3Trackers {
             cardLayout.show(mainPanel, "mainMenu");
         });
 
+        JPanel masterMaxCapeTrackerPanel = new MasterMaxCapeTrackerPanel(e -> {
+            frame.setSize(640, 360);
+            cardLayout.show(mainPanel, "mainMenu");
+        });
+
         mainPanel.add(panel, "mainMenu");
         mainPanel.add(questCapeTrackerPanel, "questCapeTracker");
         mainPanel.add(areaTasksTrackerPanel, "areaTasksTracker");
@@ -201,6 +211,7 @@ public class RS3Trackers {
         mainPanel.add(maxCapeTrackerPanel, "maxCapeTracker");
         mainPanel.add(compCapeTrackerPanel, "compCapeTracker");
         mainPanel.add(trimCompCapeTrackerPanel, "trimCompCapeTracker");
+        mainPanel.add(masterMaxCapeTrackerPanel, "masterMaxCapeTracker");
 
         cardLayout.show(mainPanel, "mainMenu");
 
