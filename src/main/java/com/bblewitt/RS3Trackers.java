@@ -14,7 +14,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class RS3Trackers {
-    private static final String VERSION = "1.5.0";
+    private static final String VERSION = "1.6.0";
     private static CardLayout cardLayout;
     private static JPanel mainPanel;
     private static int messageCode = 1;
@@ -73,10 +73,11 @@ public class RS3Trackers {
                 {40, 85},
                 {40, 85},
                 {40, 85},
+                {40, 85},
                 {48, 85}
         };
 
-        for (int i = 1; i <= 6; i++) {
+        for (int i = 1; i <= 7; i++) {
             JButton navButton = new JButton();
 
             ImageIcon originalIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/button" + i + ".png")));
@@ -108,8 +109,9 @@ public class RS3Trackers {
                 case 2 -> navButton.setToolTipText("Area Tasks Tracker");
                 case 3 -> navButton.setToolTipText("Master Quest Cape Tracker");
                 case 4 -> navButton.setToolTipText("Max Cape Tracker");
-                case 5 -> navButton.setToolTipText("Completionist Cape / Trimmed Completionist Cape Tracker");
-                case 6 -> navButton.setToolTipText("Master Max Cape Tracker");
+                case 5 -> navButton.setToolTipText("Completionist Cape Tracker");
+                case 6 -> navButton.setToolTipText("Trimmed Completionist Cape Tracker");
+                case 7 -> navButton.setToolTipText("Master Max Cape Tracker");
             }
 
             if (i == 1) {
@@ -136,6 +138,11 @@ public class RS3Trackers {
                 navButton.addActionListener(e -> {
                     frame.setSize(640, 720);
                     cardLayout.show(mainPanel, "compCapeTracker");
+                });
+            } else if (i == 6) {
+                navButton.addActionListener(e -> {
+                    frame.setSize(640, 720);
+                    cardLayout.show(mainPanel, "trimCompCapeTracker");
                 });
             } else {
                 int finalI = i;
@@ -182,12 +189,18 @@ public class RS3Trackers {
             cardLayout.show(mainPanel, "mainMenu");
         });
 
+        JPanel trimCompCapeTrackerPanel = new TrimCompCapeTrackerPanel(e -> {
+            frame.setSize(640, 360);
+            cardLayout.show(mainPanel, "mainMenu");
+        });
+
         mainPanel.add(panel, "mainMenu");
         mainPanel.add(questCapeTrackerPanel, "questCapeTracker");
         mainPanel.add(areaTasksTrackerPanel, "areaTasksTracker");
         mainPanel.add(masterQuestCapeTrackerPanel, "masterQuestCapeTracker");
         mainPanel.add(maxCapeTrackerPanel, "maxCapeTracker");
         mainPanel.add(compCapeTrackerPanel, "compCapeTracker");
+        mainPanel.add(trimCompCapeTrackerPanel, "trimCompCapeTracker");
 
         cardLayout.show(mainPanel, "mainMenu");
 
