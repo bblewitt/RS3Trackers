@@ -4,13 +4,18 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import main.java.com.bblewitt.pages.*;
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 
 public class RS3Trackers {
     private static final String VERSION = "1.7.0";
@@ -26,10 +31,76 @@ public class RS3Trackers {
     }
 
     public void run() {
-        JFrame frame = new JFrame("RS3 Trackers - Version " + VERSION);
+        JFrame frame = new JFrame("RS3 Trackers");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(640, 360);
         frame.setLocationRelativeTo(null);
+        frame.setResizable(false);
+
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        JMenu htuMenu = new JMenu("How to use");
+        JMenu versionMenu = new JMenu("Version");
+        JMenu helpMenu = new JMenu("Report Issue");
+        JMenuItem openItem = new JMenuItem("Open");
+        JMenuItem exitItem = new JMenuItem("Exit");
+        fileMenu.add(openItem);
+        fileMenu.add(exitItem);
+
+        menuBar.add(fileMenu);
+        menuBar.add(htuMenu);
+        menuBar.add(versionMenu);
+        menuBar.add(helpMenu);
+        frame.setJMenuBar(menuBar);
+
+        htuMenu.addMenuListener(new javax.swing.event.MenuListener() {
+            @Override
+            public void menuSelected(javax.swing.event.MenuEvent e) {
+                showHowToUsePanel(frame);
+            }
+
+            @Override
+            public void menuDeselected(MenuEvent e) {
+            }
+
+            @Override
+            public void menuCanceled(MenuEvent e) {
+            }
+        });
+
+        versionMenu.addMenuListener(new javax.swing.event.MenuListener() {
+            @Override
+            public void menuSelected(javax.swing.event.MenuEvent e) {
+                showVersionPanel(frame);
+            }
+
+            @Override
+            public void menuDeselected(javax.swing.event.MenuEvent e) {
+            }
+
+            @Override
+            public void menuCanceled(javax.swing.event.MenuEvent e) {
+            }
+        });
+
+        helpMenu.addMenuListener(new javax.swing.event.MenuListener() {
+            @Override
+            public void menuSelected(javax.swing.event.MenuEvent e) {
+                openReportIssuePage();
+            }
+
+            @Override
+            public void menuDeselected(javax.swing.event.MenuEvent e) {
+            }
+
+            @Override
+            public void menuCanceled(javax.swing.event.MenuEvent e) {
+            }
+        });
+
+        openItem.addActionListener(e -> openDirectory(frame));
+
+        exitItem.addActionListener(e -> System.exit(0));
 
         ImageIcon windowIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/icon.png")));
         frame.setIconImage(windowIcon.getImage());
@@ -308,5 +379,83 @@ public class RS3Trackers {
         String uniqueCode = "ERR-" + messageCode++;
         String fullMessage = "Error Code: " + uniqueCode + "\n" + message;
         JOptionPane.showMessageDialog(null, fullMessage, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static String fetchReadmeFromGitHub() {
+        StringBuilder content = new StringBuilder();
+        try {
+            URL url = new URL("https://raw.githubusercontent.com/bblewitt/RS3Trackers/master/README.md");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            while ((line = in.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            in.close();
+        } catch (Exception e) {
+            showErrorMessage("Error fetching the readme: " + e.getMessage());
+        }
+        return content.toString();
+    }
+
+    public static String markdownToHtml(String markdown) {
+        Parser parser = Parser.builder().build();
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
+        return renderer.render(parser.parse(markdown));  // Convert markdown to HTML
+    }
+
+    public static void showHowToUsePanel(JFrame frame) {
+        String markdownContent = fetchReadmeFromGitHub();
+        String htmlContent = markdownToHtml(markdownContent);
+        JTextPane textPane = new JTextPane();
+        textPane.setContentType("text/html");
+        textPane.setText(htmlContent);
+        textPane.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textPane);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane, BorderLayout.CENTER);
+        JOptionPane.showMessageDialog(frame, panel, "How to Use", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public static void openDirectory(JFrame frame) {
+        String userHome = System.getProperty("user.home");
+        File directory = new File(userHome + "/RS3Trackers");
+
+        if (!directory.exists()) {
+            if (directory.mkdirs()) {
+                JOptionPane.showMessageDialog(frame, "Directory created: " + directory.getAbsolutePath());
+            } else {
+                JOptionPane.showMessageDialog(frame, "Failed to create directory: " + directory.getAbsolutePath(), "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            Desktop.getDesktop().open(directory);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(frame, "Unable to open directory: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void showVersionPanel(JFrame frame) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JLabel versionLabel = new JLabel("Version: " + VERSION);
+        versionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        panel.add(versionLabel);
+
+        JOptionPane.showMessageDialog(frame, panel, "RS3 Trackers", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public static void openReportIssuePage() {
+        try {
+            URI uri = new URI("https://github.com/bblewitt/RS3Trackers/issues");
+            Desktop.getDesktop().browse(uri);  // Open the URL in the default browser
+        } catch (URISyntaxException | IOException e) {
+            JOptionPane.showMessageDialog(null, "Unable to open the Report Issue page.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

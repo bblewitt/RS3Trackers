@@ -313,16 +313,17 @@ public class AreaTasksTrackerPanel extends JPanel {
         panel.add(skillLevelLabel, gbc);
 
         int xpRemaining = (currentLevel >= targetLevel) ? 0 : targetXp - currentXp;
+        String xpRemainingText = (xpRemaining == 0) ? "Done" : String.format("%,d", xpRemaining);
         String skillName = skillIcon.getDescription() != null ? skillIcon.getDescription() : "Unknown Skill";
 
         String tooltip = String.format(
-                "<html>%s<br>Rank: %,d<br>Current XP: %,d<br>Target XP: %,d<br>XP Remaining: %,d</html>",
-                skillName, rank, currentXp, targetXp, xpRemaining
+                "<html>%s<br>Rank: %,d<br>Current XP: %,d<br>Target XP: %,d<br>XP Remaining: %s</html>",
+                skillName, rank, currentXp, targetXp, xpRemainingText
         );
         panel.setToolTipText(tooltip);
 
         if (currentLevel >= targetLevel) {
-            panel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 3));
+            panel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 1));
         } else {
             panel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         }
