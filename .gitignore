@@ -33,7 +33,6 @@ bin/
 # Ignore Gradle build output directory
 build
 /gradle.properties
-/gradlew.bat
 /.gitattributes
 /app/build.gradle
 /settings.gradle
