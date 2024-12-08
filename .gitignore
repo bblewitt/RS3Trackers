@@ -35,4 +35,3 @@ build
 /gradle.properties
 /.gitattributes
 /app/build.gradle
-/settings.gradle
