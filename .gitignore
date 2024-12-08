@@ -36,6 +36,5 @@ build
 /gradlew
 /gradlew.bat
 /.gitattributes
-/gradle/
 /app/build.gradle
 /settings.gradle
