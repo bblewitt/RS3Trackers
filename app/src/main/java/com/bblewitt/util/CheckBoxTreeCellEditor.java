@@ -1,4 +1,4 @@
-package main.java.com.bblewitt.util;
+package com.bblewitt.util;
 
 import javax.swing.*;
 import javax.swing.tree.*;

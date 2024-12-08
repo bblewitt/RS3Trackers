@@ -1,13 +1,13 @@
-package main.java.com.bblewitt.pages;
+package com.bblewitt.pages;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.targets.TrimCompCapeTrackerTargetLevels;
-import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
-import main.java.com.bblewitt.util.CustomToolTip;
-import main.java.com.bblewitt.util.CustomTreeCellRenderer;
-import main.java.com.bblewitt.util.XpTable;
+import com.bblewitt.targets.TrimCompCapeTrackerTargetLevels;
+import com.bblewitt.util.CheckBoxTreeCellEditor;
+import com.bblewitt.util.CustomToolTip;
+import com.bblewitt.util.CustomTreeCellRenderer;
+import com.bblewitt.util.XpTable;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;

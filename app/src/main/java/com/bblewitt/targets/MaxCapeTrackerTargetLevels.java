@@ -1,6 +1,7 @@
-package main.java.com.bblewitt.targets;
+package com.bblewitt.targets;
 
-public enum CompCapeTrackerTargetLevels {
+@SuppressWarnings("SameParameterValue")
+public enum MaxCapeTrackerTargetLevels {
     ATTACK(99),
     STRENGTH(99),
     DEFENCE(99),
@@ -9,33 +10,33 @@ public enum CompCapeTrackerTargetLevels {
     MAGIC(99),
     RUNECRAFTING(99),
     CONSTRUCTION(99),
-    DUNGEONEERING(120),
-    ARCHAEOLOGY(120),
+    DUNGEONEERING(99),
+    ARCHAEOLOGY(99),
 
     CONSTITUTION(99),
     AGILITY(99),
-    HERBLORE(120),
+    HERBLORE(99),
     THIEVING(99),
     CRAFTING(99),
     FLETCHING(99),
-    SLAYER(120),
+    SLAYER(99),
     HUNTER(99),
     DIVINATION(99),
-    NECROMANCY(120),
+    NECROMANCY(99),
 
-    MINING(110),
-    SMITHING(110),
+    MINING(99),
+    SMITHING(99),
     FISHING(99),
     COOKING(99),
     FIREMAKING(99),
     WOODCUTTING(99),
-    FARMING(120),
+    FARMING(99),
     SUMMONING(99),
-    INVENTION(120);
+    INVENTION(99);
 
     private final int targetLevel;
 
-    CompCapeTrackerTargetLevels(int targetLevel) {
+    MaxCapeTrackerTargetLevels(int targetLevel) {
         this.targetLevel = targetLevel;
     }
 

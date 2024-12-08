@@ -1,4 +1,4 @@
-package main.java.com.bblewitt.util;
+package com.bblewitt.util;
 
 import java.util.HashMap;
 import java.util.Map;

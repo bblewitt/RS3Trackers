@@ -1,8 +1,8 @@
-package main.java.com.bblewitt;
+package com.bblewitt;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.pages.*;
+import com.bblewitt.pages.*;
 import javax.swing.*;
 import javax.swing.event.MenuEvent;
 import java.awt.*;

@@ -1,6 +1,6 @@
-package main.java.com.bblewitt.targets;
+package com.bblewitt.targets;
 
-public enum TrimCompCapeTrackerTargetLevels {
+public enum CompCapeTrackerTargetLevels {
     ATTACK(99),
     STRENGTH(99),
     DEFENCE(99),
@@ -35,7 +35,7 @@ public enum TrimCompCapeTrackerTargetLevels {
 
     private final int targetLevel;
 
-    TrimCompCapeTrackerTargetLevels(int targetLevel) {
+    CompCapeTrackerTargetLevels(int targetLevel) {
         this.targetLevel = targetLevel;
     }
 

@@ -1,13 +1,13 @@
-package main.java.com.bblewitt.pages;
+package com.bblewitt.pages;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.targets.MaxCapeTrackerTargetLevels;
-import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
-import main.java.com.bblewitt.util.CustomToolTip;
-import main.java.com.bblewitt.util.CustomTreeCellRenderer;
-import main.java.com.bblewitt.util.XpTable;
+import com.bblewitt.targets.MasterQuestCapeTrackerTargetLevels;
+import com.bblewitt.util.CheckBoxTreeCellEditor;
+import com.bblewitt.util.CustomToolTip;
+import com.bblewitt.util.CustomTreeCellRenderer;
+import com.bblewitt.util.XpTable;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -27,8 +27,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MaxCapeTrackerPanel extends JPanel {
-    private static final Logger LOGGER = Logger.getLogger(MaxCapeTrackerPanel.class.getName());
+public class MasterQuestCapeTrackerPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(MasterQuestCapeTrackerPanel.class.getName());
     private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
     private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
 
@@ -67,12 +67,12 @@ public class MaxCapeTrackerPanel extends JPanel {
             {"Archaeology", "Necromancy"}
     };
 
-    public MaxCapeTrackerPanel(ActionListener backActionListener) {
+    public MasterQuestCapeTrackerPanel(ActionListener backActionListener) {
         setPreferredSize(new Dimension(640, 720));
         setBackground(new Color(11, 31, 41));
         setLayout(new BorderLayout());
 
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/max_cape_tracker.png")));
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/master_quest_cape_tracker.png")));
         JLabel imageLabel = new JLabel(imageIcon, SwingConstants.CENTER);
         imageLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -142,7 +142,7 @@ public class MaxCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateMaxCapeChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateMasterQuestChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -213,7 +213,7 @@ public class MaxCapeTrackerPanel extends JPanel {
                             int targetLevel;
 
                             try {
-                                targetLevel = MaxCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
+                                targetLevel = MasterQuestCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
                                 showMessage("No target level found for skill: " + skillName);
                                 targetLevel = 99;
@@ -330,23 +330,23 @@ public class MaxCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateMaxCapeChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateMasterQuestChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
-        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/max_cape.json")) {
+        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/master_quest.json")) {
             assert inputStream != null;
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
                 baseTaskLists = gson.fromJson(reader, JsonObject.class);
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to load base max cape file", e);
+            LOGGER.log(Level.SEVERE, "Failed to load base master quest file", e);
             return;
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userTaskLists = loadUserMaxCapeProgress(username);
+        JsonObject userTaskLists = loadUserMasterQuestProgress(username);
 
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Max Cape");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Master Quest");
 
         totalTasks = 0;
         completedTasks = 0;
@@ -377,7 +377,7 @@ public class MaxCapeTrackerPanel extends JPanel {
 
                     taskListCheckBox.addActionListener(e -> {
                         userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
-                        debouncedSaveUserMaxCapeProgress(username, userTaskLists);
+                        debouncedSaveUserMasterQuestProgress(username, userTaskLists);
 
                         if (taskListCheckBox.isSelected()) {
                             completedTasks++;
@@ -421,50 +421,50 @@ public class MaxCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserMaxCapeProgress(String username) {
-        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_max_cape.json");
+    private JsonObject loadUserMasterQuestProgress(String username) {
+        File userMasterQuestFile = new File(JSON_DATA_DIR + username + "_master_quest.json");
 
-        if (!userMaxCapeFile.exists()) {
+        if (!userMasterQuestFile.exists()) {
             return new JsonObject();
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(userMaxCapeFile))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(userMasterQuestFile))) {
             Gson gson = new Gson();
             return gson.fromJson(reader, JsonObject.class);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to load max cape progress for user: " + username + ". Returning default data.", e);
+            LOGGER.log(Level.WARNING, "Failed to load master quest cape progress for user: " + username + ". Returning default data.", e);
             return new JsonObject();
         }
     }
 
-    private void saveUserMaxCapeProgress(String username, String taskList, boolean completed) {
-        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_max_cape.json");
-        JsonObject userTaskLists = loadUserMaxCapeProgress(username);
+    private void saveUserMasterQuestProgress(String username, String masterQuest, boolean completed) {
+        File userMasterQuestFile = new File(JSON_DATA_DIR + username + "_master_quest.json");
+        JsonObject userMasterQuest = loadUserMasterQuestProgress(username);
 
-        userTaskLists.addProperty(taskList, completed);
+        userMasterQuest.addProperty(masterQuest, completed);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userMaxCapeFile))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(userMasterQuestFile))) {
             Gson gson = new Gson();
-            gson.toJson(userTaskLists, writer);
+            gson.toJson(userMasterQuest, writer);
         } catch (IOException e) {
-            showMessage("Failed to save max cape progress for user: " + username);
+            showMessage("Failed to save master quest cape progress for user: " + username);
         }
     }
 
-    private void debouncedSaveUserMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void debouncedSaveUserMasterQuestProgress(String username, JsonObject userMasterQuest) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserMaxCapeProgress(username, userTaskLists));
+        saveTimer = new Timer(1000, e -> saveAllUserMasterQuestProgress(username, userMasterQuest));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserMaxCapeProgress(String username, JsonObject userTaskLists) {
-        for (String taskList : userTaskLists.keySet()) {
-            boolean completed = userTaskLists.get(taskList).getAsBoolean();
-            saveUserMaxCapeProgress(username, taskList, completed);
+    private void saveAllUserMasterQuestProgress(String username, JsonObject userMasterQuest) {
+        for (String masterQuest : userMasterQuest.keySet()) {
+            boolean completed = userMasterQuest.get(masterQuest).getAsBoolean();
+            saveUserMasterQuestProgress(username, masterQuest, completed);
         }
     }
 

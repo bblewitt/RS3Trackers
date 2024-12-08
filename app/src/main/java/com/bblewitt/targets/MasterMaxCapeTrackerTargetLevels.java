@@ -1,4 +1,4 @@
-package main.java.com.bblewitt.targets;
+package com.bblewitt.targets;
 
 @SuppressWarnings("SameParameterValue")
 public enum MasterMaxCapeTrackerTargetLevels {

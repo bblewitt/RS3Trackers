@@ -1,14 +1,13 @@
-package main.java.com.bblewitt.pages;
+package com.bblewitt.pages;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import main.java.com.bblewitt.targets.CompCapeTrackerTargetLevels;
-import main.java.com.bblewitt.util.CheckBoxTreeCellEditor;
-import main.java.com.bblewitt.util.CustomToolTip;
-import main.java.com.bblewitt.util.CustomTreeCellRenderer;
-import main.java.com.bblewitt.util.XpTable;
-
+import com.bblewitt.targets.MaxCapeTrackerTargetLevels;
+import com.bblewitt.util.CheckBoxTreeCellEditor;
+import com.bblewitt.util.CustomToolTip;
+import com.bblewitt.util.CustomTreeCellRenderer;
+import com.bblewitt.util.XpTable;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -28,8 +27,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CompCapeTrackerPanel extends JPanel {
-    private static final Logger LOGGER = Logger.getLogger(CompCapeTrackerPanel.class.getName());
+public class MaxCapeTrackerPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(MaxCapeTrackerPanel.class.getName());
     private static final String HISCORE_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/hiscores/";
     private static final String JSON_DATA_DIR = System.getProperty("user.home") + "/RS3Trackers/json_files/";
 
@@ -68,12 +67,12 @@ public class CompCapeTrackerPanel extends JPanel {
             {"Archaeology", "Necromancy"}
     };
 
-    public CompCapeTrackerPanel(ActionListener backActionListener) {
+    public MaxCapeTrackerPanel(ActionListener backActionListener) {
         setPreferredSize(new Dimension(640, 720));
         setBackground(new Color(11, 31, 41));
         setLayout(new BorderLayout());
 
-        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/completionist_cape_tracker.png")));
+        ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/max_cape_tracker.png")));
         JLabel imageLabel = new JLabel(imageIcon, SwingConstants.CENTER);
         imageLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -214,7 +213,7 @@ public class CompCapeTrackerPanel extends JPanel {
                             int targetLevel;
 
                             try {
-                                targetLevel = CompCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
+                                targetLevel = MaxCapeTrackerTargetLevels.valueOf(skillName.toUpperCase()).getTargetLevel();
                             } catch (IllegalArgumentException e) {
                                 showMessage("No target level found for skill: " + skillName);
                                 targetLevel = 99;
@@ -334,7 +333,7 @@ public class CompCapeTrackerPanel extends JPanel {
     private void populateMaxCapeChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
-        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/comp_cape.json")) {
+        try (InputStream inputStream = getClass().getResourceAsStream("/json_files/max_cape.json")) {
             assert inputStream != null;
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
                 baseTaskLists = gson.fromJson(reader, JsonObject.class);
@@ -423,7 +422,7 @@ public class CompCapeTrackerPanel extends JPanel {
     }
 
     private JsonObject loadUserMaxCapeProgress(String username) {
-        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_comp_cape.json");
+        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_max_cape.json");
 
         if (!userMaxCapeFile.exists()) {
             return new JsonObject();
@@ -439,7 +438,7 @@ public class CompCapeTrackerPanel extends JPanel {
     }
 
     private void saveUserMaxCapeProgress(String username, String taskList, boolean completed) {
-        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_comp_cape.json");
+        File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_max_cape.json");
         JsonObject userTaskLists = loadUserMaxCapeProgress(username);
 
         userTaskLists.addProperty(taskList, completed);

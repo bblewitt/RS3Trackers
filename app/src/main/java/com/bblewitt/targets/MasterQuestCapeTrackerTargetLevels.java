@@ -1,4 +1,4 @@
-package main.java.com.bblewitt.targets;
+package com.bblewitt.targets;
 
 public enum MasterQuestCapeTrackerTargetLevels {
     ATTACK(90),
