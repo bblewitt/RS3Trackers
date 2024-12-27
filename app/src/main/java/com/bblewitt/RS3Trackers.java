@@ -327,6 +327,7 @@ public class RS3Trackers {
 
             final String outputFileName = saveHiscoresData(username, content);
 
+            JOptionPane.showMessageDialog(null, "Hiscores have been saved", "Success", JOptionPane.INFORMATION_MESSAGE);
             System.out.println("Data saved successfully to " + outputFileName);
         } catch (Exception e) {
             showErrorMessage("Error fetching or saving data: " + e.getMessage());
@@ -403,7 +404,7 @@ public class RS3Trackers {
     public static String markdownToHtml(String markdown) {
         Parser parser = Parser.builder().build();
         HtmlRenderer renderer = HtmlRenderer.builder().build();
-        return renderer.render(parser.parse(markdown));  // Convert markdown to HTML
+        return renderer.render(parser.parse(markdown));
     }
 
     public static void showHowToUsePanel(JFrame frame) {
@@ -453,7 +454,7 @@ public class RS3Trackers {
     public static void openReportIssuePage() {
         try {
             URI uri = new URI("https://github.com/bblewitt/RS3Trackers/issues");
-            Desktop.getDesktop().browse(uri);  // Open the URL in the default browser
+            Desktop.getDesktop().browse(uri);
         } catch (URISyntaxException | IOException e) {
             JOptionPane.showMessageDialog(null, "Unable to open the Report Issue page.", "Error", JOptionPane.ERROR_MESSAGE);
         }

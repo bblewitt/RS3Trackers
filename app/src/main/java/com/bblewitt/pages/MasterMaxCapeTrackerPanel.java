@@ -142,7 +142,7 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateMasterMaxCapeChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -330,7 +330,7 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateMasterMaxCapeChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
         try (InputStream inputStream = getClass().getResourceAsStream("/json_files/master_max_cape.json")) {
@@ -344,7 +344,7 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userTaskLists = loadUserMasterMaxCapeProgress(username);
+        JsonObject userTaskLists = loadUserProgress(username);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Max Cape");
 
@@ -377,7 +377,7 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
 
                     taskListCheckBox.addActionListener(e -> {
                         userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
-                        debouncedSaveUserMasterMaxCapeProgress(username, userTaskLists);
+                        debouncedSaveUserProgress(username, userTaskLists);
 
                         if (taskListCheckBox.isSelected()) {
                             completedTasks++;
@@ -421,7 +421,7 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserMasterMaxCapeProgress(String username) {
+    private JsonObject loadUserProgress(String username) {
         File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_master_max_cape.json");
 
         if (!userMaxCapeFile.exists()) {
@@ -437,9 +437,9 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void saveUserMasterMaxCapeProgress(String username, String taskList, boolean completed) {
+    private void saveUserProgress(String username, String taskList, boolean completed) {
         File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_master_max_cape.json");
-        JsonObject userTaskLists = loadUserMasterMaxCapeProgress(username);
+        JsonObject userTaskLists = loadUserProgress(username);
 
         userTaskLists.addProperty(taskList, completed);
 
@@ -451,20 +451,20 @@ public class MasterMaxCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void debouncedSaveUserMasterMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void debouncedSaveUserProgress(String username, JsonObject userTaskLists) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserMasterMaxCapeProgress(username, userTaskLists));
+        saveTimer = new Timer(1000, e -> saveAllUserProgress(username, userTaskLists));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserMasterMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void saveAllUserProgress(String username, JsonObject userTaskLists) {
         for (String taskList : userTaskLists.keySet()) {
             boolean completed = userTaskLists.get(taskList).getAsBoolean();
-            saveUserMasterMaxCapeProgress(username, taskList, completed);
+            saveUserProgress(username, taskList, completed);
         }
     }
 

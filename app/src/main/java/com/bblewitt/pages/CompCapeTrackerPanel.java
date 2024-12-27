@@ -142,7 +142,7 @@ public class CompCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateMaxCapeChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -330,7 +330,7 @@ public class CompCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateMaxCapeChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
         try (InputStream inputStream = getClass().getResourceAsStream("/json_files/comp_cape.json")) {
@@ -344,7 +344,7 @@ public class CompCapeTrackerPanel extends JPanel {
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userTaskLists = loadUserMaxCapeProgress(username);
+        JsonObject userTaskLists = loadUserProgress(username);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Max Cape");
 
@@ -377,7 +377,7 @@ public class CompCapeTrackerPanel extends JPanel {
 
                     taskListCheckBox.addActionListener(e -> {
                         userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
-                        debouncedSaveUserMaxCapeProgress(username, userTaskLists);
+                        debouncedSaveUserProgress(username, userTaskLists);
 
                         if (taskListCheckBox.isSelected()) {
                             completedTasks++;
@@ -421,7 +421,7 @@ public class CompCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserMaxCapeProgress(String username) {
+    private JsonObject loadUserProgress(String username) {
         File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_comp_cape.json");
 
         if (!userMaxCapeFile.exists()) {
@@ -437,9 +437,9 @@ public class CompCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void saveUserMaxCapeProgress(String username, String taskList, boolean completed) {
+    private void saveUserProgress(String username, String taskList, boolean completed) {
         File userMaxCapeFile = new File(JSON_DATA_DIR + username + "_comp_cape.json");
-        JsonObject userTaskLists = loadUserMaxCapeProgress(username);
+        JsonObject userTaskLists = loadUserProgress(username);
 
         userTaskLists.addProperty(taskList, completed);
 
@@ -451,20 +451,20 @@ public class CompCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void debouncedSaveUserMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void debouncedSaveUserProgress(String username, JsonObject userTaskLists) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserMaxCapeProgress(username, userTaskLists));
+        saveTimer = new Timer(1000, e -> saveAllUserProgress(username, userTaskLists));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserMaxCapeProgress(String username, JsonObject userTaskLists) {
+    private void saveAllUserProgress(String username, JsonObject userTaskLists) {
         for (String taskList : userTaskLists.keySet()) {
             boolean completed = userTaskLists.get(taskList).getAsBoolean();
-            saveUserMaxCapeProgress(username, taskList, completed);
+            saveUserProgress(username, taskList, completed);
         }
     }
 

@@ -142,7 +142,7 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateMasterQuestChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -330,7 +330,7 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateMasterQuestChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
         try (InputStream inputStream = getClass().getResourceAsStream("/json_files/master_quest.json")) {
@@ -344,7 +344,7 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userTaskLists = loadUserMasterQuestProgress(username);
+        JsonObject userTaskLists = loadUserProgress(username);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Master Quest");
 
@@ -377,7 +377,7 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
 
                     taskListCheckBox.addActionListener(e -> {
                         userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
-                        debouncedSaveUserMasterQuestProgress(username, userTaskLists);
+                        debouncedSaveUserProgress(username, userTaskLists);
 
                         if (taskListCheckBox.isSelected()) {
                             completedTasks++;
@@ -421,7 +421,7 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserMasterQuestProgress(String username) {
+    private JsonObject loadUserProgress(String username) {
         File userMasterQuestFile = new File(JSON_DATA_DIR + username + "_master_quest.json");
 
         if (!userMasterQuestFile.exists()) {
@@ -437,9 +437,9 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void saveUserMasterQuestProgress(String username, String masterQuest, boolean completed) {
+    private void saveUserProgress(String username, String masterQuest, boolean completed) {
         File userMasterQuestFile = new File(JSON_DATA_DIR + username + "_master_quest.json");
-        JsonObject userMasterQuest = loadUserMasterQuestProgress(username);
+        JsonObject userMasterQuest = loadUserProgress(username);
 
         userMasterQuest.addProperty(masterQuest, completed);
 
@@ -451,20 +451,20 @@ public class MasterQuestCapeTrackerPanel extends JPanel {
         }
     }
 
-    private void debouncedSaveUserMasterQuestProgress(String username, JsonObject userMasterQuest) {
+    private void debouncedSaveUserProgress(String username, JsonObject userMasterQuest) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserMasterQuestProgress(username, userMasterQuest));
+        saveTimer = new Timer(1000, e -> saveAllUserProgress(username, userMasterQuest));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserMasterQuestProgress(String username, JsonObject userMasterQuest) {
+    private void saveAllUserProgress(String username, JsonObject userMasterQuest) {
         for (String masterQuest : userMasterQuest.keySet()) {
             boolean completed = userMasterQuest.get(masterQuest).getAsBoolean();
-            saveUserMasterQuestProgress(username, masterQuest, completed);
+            saveUserProgress(username, masterQuest, completed);
         }
     }
 

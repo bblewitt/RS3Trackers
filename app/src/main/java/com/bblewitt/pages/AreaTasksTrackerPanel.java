@@ -142,7 +142,7 @@ public class AreaTasksTrackerPanel extends JPanel {
         usernameDropdown.addActionListener(e -> {
             String selectedUsername = (String) usernameDropdown.getSelectedItem();
             loadSkillsData(selectedUsername);
-            SwingUtilities.invokeLater(() -> populateAreaChecklist(rightPanel, usernameDropdown));
+            SwingUtilities.invokeLater(() -> populateChecklist(rightPanel, usernameDropdown));
         });
 
         bottomCenterPanel.add(leftPanel);
@@ -331,7 +331,7 @@ public class AreaTasksTrackerPanel extends JPanel {
         return panel;
     }
 
-    private void populateAreaChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
+    private void populateChecklist(JPanel rightPanel, JComboBox<String> usernameDropdown) {
         Gson gson = new Gson();
         JsonObject baseTaskLists;
         try (InputStream inputStream = getClass().getResourceAsStream("/json_files/area_tasks.json")) {
@@ -345,7 +345,7 @@ public class AreaTasksTrackerPanel extends JPanel {
         }
 
         String username = (String) usernameDropdown.getSelectedItem();
-        JsonObject userTaskLists = loadUserAreaTaskProgress(username);
+        JsonObject userTaskLists = loadUserProgress(username);
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Area Tasks");
 
@@ -378,7 +378,7 @@ public class AreaTasksTrackerPanel extends JPanel {
 
                     taskListCheckBox.addActionListener(e -> {
                         userTaskLists.addProperty(taskList, taskListCheckBox.isSelected());
-                        debouncedSaveUserAreaProgress(username, userTaskLists);
+                        debouncedSaveProgress(username, userTaskLists);
 
                         if (taskListCheckBox.isSelected()) {
                             completedTasks++;
@@ -422,7 +422,7 @@ public class AreaTasksTrackerPanel extends JPanel {
         rightPanel.repaint();
     }
 
-    private JsonObject loadUserAreaTaskProgress(String username) {
+    private JsonObject loadUserProgress(String username) {
         File userAreaTaskFile = new File(JSON_DATA_DIR + username + "_area_tasks.json");
 
         if (!userAreaTaskFile.exists()) {
@@ -438,9 +438,9 @@ public class AreaTasksTrackerPanel extends JPanel {
         }
     }
 
-    private void saveUserAreaTaskProgress(String username, String area, boolean completed) {
+    private void saveUserProgress(String username, String area, boolean completed) {
         File userAreaFile = new File(JSON_DATA_DIR + username + "_area_tasks.json");
-        JsonObject userAreaTasks = loadUserAreaTaskProgress(username);
+        JsonObject userAreaTasks = loadUserProgress(username);
 
         userAreaTasks.addProperty(area, completed);
 
@@ -452,20 +452,20 @@ public class AreaTasksTrackerPanel extends JPanel {
         }
     }
 
-    private void debouncedSaveUserAreaProgress(String username, JsonObject userAreaTasks) {
+    private void debouncedSaveProgress(String username, JsonObject userAreaTasks) {
         if (saveTimer != null) {
             saveTimer.stop();
         }
 
-        saveTimer = new Timer(1000, e -> saveAllUserAreaTaskProgress(username, userAreaTasks));
+        saveTimer = new Timer(1000, e -> saveAllUserProgress(username, userAreaTasks));
         saveTimer.setRepeats(false);
         saveTimer.start();
     }
 
-    private void saveAllUserAreaTaskProgress(String username, JsonObject userAreaTasks) {
+    private void saveAllUserProgress(String username, JsonObject userAreaTasks) {
         for (String area : userAreaTasks.keySet()) {
             boolean completed = userAreaTasks.get(area).getAsBoolean();
-            saveUserAreaTaskProgress(username, area, completed);
+            saveUserProgress(username, area, completed);
         }
     }
 
